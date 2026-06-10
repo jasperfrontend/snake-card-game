@@ -74,6 +74,22 @@ watch(
 );
 const beatIsBig = computed(() => !!activeBeat.value && BIG.has(activeBeat.value.type));
 const games = computed(() => game.record.value.wins + game.record.value.losses);
+
+// who's playing right now — a loud, central indicator
+const turnInfo = computed(() => {
+  if (game.gameOver.value || game.roundResult.value) return null;
+  const cur = game.current.value;
+  const you = cur === humanSeat;
+  return {
+    you,
+    seat: cur,
+    text: you
+      ? game.awaitingHuman.value
+        ? 'Your turn — play a card'
+        : 'Your turn'
+      : `${game.playerName(cur)} is playing…`,
+  };
+});
 </script>
 
 <template>
@@ -128,6 +144,13 @@ const games = computed(() => game.record.value.wins + game.record.value.losses);
       <RulesModal v-if="showRules" @close="showRules = false" />
     </Transition>
 
+    <Transition name="turn">
+      <div v-if="turnInfo" class="turnbar" :class="{ you: turnInfo.you }" aria-live="polite">
+        <span class="pip"></span>
+        <span class="txt">{{ turnInfo.text }}</span>
+      </div>
+    </Transition>
+
     <SnakeRow
       :segments="game.snake.value"
       :length="game.length.value"
@@ -140,8 +163,11 @@ const games = computed(() => game.record.value.wins + game.record.value.losses);
         v-for="(p, i) in game.state.value.players"
         :key="i"
         class="seat"
-        :class="{ active: game.current.value === i && !game.gameOver.value, you: i === humanSeat }"
+        :class="{ active: game.current.value === i && !game.gameOver.value && !game.roundResult.value, you: i === humanSeat }"
       >
+        <span v-if="game.current.value === i && !game.gameOver.value && !game.roundResult.value" class="now">
+          ▶ now
+        </span>
         <div class="seat-head">
           <strong>{{ game.playerName(i) }}</strong>
           <span class="score">{{ p.score }}</span>
@@ -313,21 +339,124 @@ button.ghost {
   opacity: 0;
 }
 
+/* ---- whose turn: a loud, central indicator ---- */
+.turnbar {
+  margin: 18px auto 0;
+  max-width: max-content;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  background: var(--cardback);
+  color: var(--bone);
+  border: 1px solid rgba(215, 180, 92, 0.35);
+  box-shadow: 0 10px 24px -16px rgba(0, 0, 0, 0.6);
+}
+.turnbar.you {
+  background: var(--gold);
+  color: var(--cardback);
+  border-color: var(--gold-bright);
+  font-weight: 700;
+}
+.turnbar .pip {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 0 0 rgba(215, 180, 92, 0.7);
+  animation: pip 1.4s ease-out infinite;
+}
+.turnbar.you .pip {
+  background: var(--cardback);
+  box-shadow: 0 0 0 0 rgba(27, 42, 34, 0.6);
+  animation-name: pipDark;
+}
+@keyframes pip {
+  0% {
+    box-shadow: 0 0 0 0 rgba(215, 180, 92, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 9px rgba(215, 180, 92, 0);
+  }
+}
+@keyframes pipDark {
+  0% {
+    box-shadow: 0 0 0 0 rgba(27, 42, 34, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 9px rgba(27, 42, 34, 0);
+  }
+}
+.turn-enter-active,
+.turn-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.turn-enter-from,
+.turn-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
 .seats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
-  margin-top: 28px;
+  margin-top: 22px;
 }
 .seat {
-  border: 1px solid var(--gold);
+  position: relative;
+  border: 1.5px solid var(--gold);
   border-radius: 10px;
   padding: 10px 12px;
   background: var(--bone);
-  transition: box-shadow 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
 }
-.seat.active {
-  box-shadow: 0 0 0 2px var(--gold-bright);
+.seats .seat.active {
+  border-color: var(--gold-bright);
+  border-width: 2px;
+  background: linear-gradient(160deg, #fbf3df, #f4e8c8);
+  transform: translateY(-4px) scale(1.025);
+  box-shadow:
+    0 0 0 3px rgba(215, 180, 92, 0.45),
+    0 14px 28px -14px rgba(168, 123, 43, 0.7);
+  animation: seatpulse 1.6s ease-in-out infinite;
+}
+@keyframes seatpulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px rgba(215, 180, 92, 0.35),
+      0 14px 28px -16px rgba(168, 123, 43, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(215, 180, 92, 0.6),
+      0 16px 30px -14px rgba(168, 123, 43, 0.75);
+  }
+}
+.seat .now {
+  position: absolute;
+  top: -11px;
+  left: 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cardback);
+  background: var(--gold-bright);
+  border-radius: 999px;
+  padding: 2px 9px;
+  box-shadow: 0 4px 10px -4px rgba(168, 123, 43, 0.7);
 }
 .seat.you {
   background: linear-gradient(160deg, var(--bone), #efead7);

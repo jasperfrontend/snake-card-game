@@ -45,7 +45,10 @@ export interface GameOptions {
   difficulty?: Difficulty; // bot strength, default 'medium'
   humanSeat?: number; // which seat the human plays, default 0
   seed?: number; // fix for deterministic play/tests; otherwise random
-  botDelayMs?: number; // pause before each bot acts, default 650 (0 = instant)
+  /** Shorthand: sets both think and settle to this. Pass 0 for instant (tests). */
+  botDelayMs?: number;
+  thinkMs?: number; // a bot "thinks" before revealing its move (default 2300)
+  settleMs?: number; // pause after a move so the table can read it (default 800)
 }
 
 const BEAT_TYPES = new Set<GameEvent['type']>(['pin', 'bite', 'shed', 'coil', 'slip', 'scramble']);
@@ -57,7 +60,10 @@ function mod(i: number, n: number): number {
 export function useSnakeGame(opts: GameOptions = {}) {
   const n = opts.players ?? 3;
   const humanSeat = opts.humanSeat ?? 0;
-  const botDelay = opts.botDelayMs ?? 650;
+  // Deliberate pacing: a bot turn takes thinkMs + settleMs (~3.1s) so the table
+  // is readable. botDelayMs is a shorthand (0 = instant, used by the tests).
+  const thinkMs = opts.thinkMs ?? opts.botDelayMs ?? 2300;
+  const settleMs = opts.settleMs ?? opts.botDelayMs ?? 800;
   const difficulty = ref<Difficulty>(opts.difficulty ?? loadSettings().difficulty);
 
   let rngBox = rngFromState({ seed: opts.seed ?? 1, calls: 0 });
@@ -231,16 +237,16 @@ export function useSnakeGame(opts: GameOptions = {}) {
             awaitingHuman.value = true;
             return; // wait for play()
           }
-          await delay(botDelay); // a stranded trick auto-resolved (or a bite ended it)
+          await delay(settleMs); // a stranded trick auto-resolved (or a bite ended it)
           continue;
         }
 
         thinkingSeat.value = cur;
-        await delay(botDelay);
+        await delay(thinkMs);
         thinkingSeat.value = null;
         stepBot();
         flushEvents();
-        await delay(botDelay * 0.4);
+        await delay(settleMs);
       }
       onRoundEnd();
     } finally {

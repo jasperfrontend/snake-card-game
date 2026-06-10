@@ -3,11 +3,13 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useSnakeGame, type Beat } from './composables/useSnakeGame';
 import CardFace from './components/CardFace.vue';
 import SnakeRow from './components/SnakeRow.vue';
+import RulesModal from './components/RulesModal.vue';
 import type { Difficulty } from '../engine/types';
 
 const game = useSnakeGame({ players: 3 });
 const difficulty = ref<Difficulty>(game.difficulty.value);
 const selectedAce = ref<number | null>(null);
+const showRules = ref(false);
 
 onMounted(() => {
   if (game.loadSaved()) {
@@ -117,9 +119,14 @@ const games = computed(() => game.record.value.wins + game.record.value.losses);
             <option value="hard">hard</option>
           </select>
         </label>
+        <button class="ghost" @click="showRules = true">Rules</button>
         <button class="primary" @click="start">New game</button>
       </div>
     </header>
+
+    <Transition name="fade">
+      <RulesModal v-if="showRules" @close="showRules = false" />
+    </Transition>
 
     <SnakeRow
       :segments="game.snake.value"
@@ -292,6 +299,18 @@ button.primary {
   color: var(--bone);
   border-color: var(--gold);
   font-weight: 700;
+}
+button.ghost {
+  background: transparent;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 .seats {

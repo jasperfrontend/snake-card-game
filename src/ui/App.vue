@@ -124,7 +124,7 @@ const turnInfo = computed(() => {
         <h1>SNAKE</h1>
       </div>
       <div class="controls">
-        <span class="record" :title="`${games} games played`">
+        <span class="record" :title="`${games} ${games === 1 ? 'game' : 'games'} played`">
           <b>{{ game.record.value.wins }}</b>W · <b>{{ game.record.value.losses }}</b>L
         </span>
         <label class="diff">
@@ -173,7 +173,7 @@ const turnInfo = computed(() => {
           <span class="score">{{ p.score }}</span>
         </div>
         <div class="seat-sub">
-          <span>{{ p.hand.length }} cards</span>
+          <span>{{ p.hand.length }} {{ p.hand.length === 1 ? 'card' : 'cards' }}</span>
           <span v-if="game.thinkingSeat.value === i" class="think">thinking<span class="dots">…</span></span>
           <span v-else-if="game.current.value === i && !game.gameOver.value" class="turn">to play</span>
         </div>

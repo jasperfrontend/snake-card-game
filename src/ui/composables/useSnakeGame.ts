@@ -5,21 +5,40 @@
 // (stranded tricks, bites) resolve through the same engine primitives the
 // headless runner uses, so the UI can never diverge from the simulation.
 //
-// This file may use Vue and (UI-side, outside the engine) Math.random for the
-// game seed; the engine itself stays pure and deterministic.
+// This file may use Vue, browser storage and (UI-side, outside the engine)
+// Math.random for the game seed; the engine itself stays pure and deterministic.
 
-import { computed, ref, type ComputedRef, type Ref } from 'vue';
-import { mulberry32, randInt, type Rng } from '../../engine/rng';
-import {
-  beginTurn,
-  executeMove,
-  pickLoser,
-  startRound,
-  type ChoosePolicy,
-  type LegalMove,
-} from '../../engine/rules';
+import { computed, ref, type Ref } from 'vue';
+import { randInt, rngFromState } from '../../engine/rng';
+import { beginTurn, executeMove, pickLoser, startRound, type ChoosePolicy, type LegalMove } from '../../engine/rules';
 import { botChooseMove } from '../../bots/policy';
-import type { Difficulty, GameEvent, GameState, Move, Player } from '../../engine/types';
+import type { Difficulty, GameEvent, GameState, Kind, Move, Player } from '../../engine/types';
+import {
+  clearSave,
+  loadRecord,
+  loadSave,
+  loadSettings,
+  saveGame,
+  saveRecord,
+  saveSettings,
+  type Record as PlayRecord,
+} from '../persistence';
+
+/** One visible segment of the snake's body (the cards fed this round). */
+export interface SnakeSegment {
+  id: number;
+  kind: Kind | 'start';
+  label: string;
+  by: number;
+  length: number;
+}
+
+/** A short-lived "beat" used to flash a real moment on the table. */
+export interface Beat {
+  id: number;
+  type: GameEvent['type'];
+  by: number;
+}
 
 export interface GameOptions {
   players?: number; // total seats, default 3
@@ -29,48 +48,21 @@ export interface GameOptions {
   botDelayMs?: number; // pause before each bot acts, default 650 (0 = instant)
 }
 
-export interface SnakeGame {
-  state: Ref<GameState>;
-  difficulty: Ref<Difficulty>;
-  awaitingHuman: Ref<boolean>;
-  thinkingSeat: Ref<number | null>;
-  gameOver: Ref<boolean>;
-  loser: Ref<number | null>;
-  log: Ref<string[]>;
-  lastEvents: Ref<GameEvent[]>;
-
-  // derived, convenient for templates
-  length: ComputedRef<number>;
-  maxLength: ComputedRef<number>;
-  current: ComputedRef<number>;
-  direction: ComputedRef<1 | -1>;
-  scores: ComputedRef<number[]>;
-  humanHand: ComputedRef<GameState['players'][number]['hand']>;
-  legalMoves: Ref<LegalMove[]>;
-  legalIndices: ComputedRef<Set<number>>;
-  aceValues: ComputedRef<number[]>;
-  roundResult: ComputedRef<GameState['roundResult']>;
-  isHumanTurn: ComputedRef<boolean>;
-
-  playerName: (i: number) => string;
-  newGame: (difficulty?: Difficulty) => Promise<void>;
-  play: (move: Move) => Promise<void>;
-  nextRound: () => Promise<void>;
-}
+const BEAT_TYPES = new Set<GameEvent['type']>(['pin', 'bite', 'shed', 'coil', 'slip', 'scramble']);
 
 function mod(i: number, n: number): number {
   return ((i % n) + n) % n;
 }
 
-export function useSnakeGame(opts: GameOptions = {}): SnakeGame {
+export function useSnakeGame(opts: GameOptions = {}) {
   const n = opts.players ?? 3;
   const humanSeat = opts.humanSeat ?? 0;
   const botDelay = opts.botDelayMs ?? 650;
-  const difficulty = ref<Difficulty>(opts.difficulty ?? 'medium');
+  const difficulty = ref<Difficulty>(opts.difficulty ?? loadSettings().difficulty);
 
-  let rng: Rng = mulberry32(opts.seed ?? 1);
+  let rngBox = rngFromState({ seed: opts.seed ?? 1, calls: 0 });
 
-  const state = ref<GameState>(startRound(initialPlayers(), 0, rng)) as Ref<GameState>;
+  const state = ref<GameState>(startRound(initialPlayers(), 0, rngBox.rng)) as Ref<GameState>;
   const awaitingHuman = ref(false);
   const thinkingSeat = ref<number | null>(null);
   const gameOver = ref(false);
@@ -78,8 +70,13 @@ export function useSnakeGame(opts: GameOptions = {}): SnakeGame {
   const log = ref<string[]>([]);
   const lastEvents = ref<GameEvent[]>([]);
   const legalMoves = ref<LegalMove[]>([]);
+  const snake = ref<SnakeSegment[]>([]);
+  const beat = ref<Beat | null>(null);
+  const record = ref<PlayRecord>(loadRecord());
 
   let ticking = false;
+  let segId = 0;
+  let beatId = 0;
 
   const names: string[] = Array.from({ length: n }, (_, i) =>
     i === humanSeat ? 'You' : `Bot ${String.fromCharCode(65 + (i < humanSeat ? i : i - 1))}`,
@@ -102,12 +99,50 @@ export function useSnakeGame(opts: GameOptions = {}): SnakeGame {
     return new Promise((res) => setTimeout(res, ms));
   }
 
+  // -------------------------------------------------------------- event surfacing
+
   function flushEvents(): void {
     const evs = state.value.events;
     if (evs.length === 0) return;
     lastEvents.value = evs.slice();
-    for (const e of evs) log.value.push(describe(e));
+    for (const e of evs) {
+      log.value.push(describe(e));
+      applyToSnake(e);
+      if (BEAT_TYPES.has(e.type)) beat.value = { id: ++beatId, type: e.type, by: e.by };
+    }
     state.value.events = [];
+  }
+
+  function applyToSnake(e: GameEvent): void {
+    const p = (e.payload ?? {}) as Record<string, number | string>;
+    const len = state.value.length;
+    switch (e.type) {
+      case 'startLength':
+        segId = 0;
+        snake.value = [{ id: ++segId, kind: 'start', label: String(p.length), by: e.by, length: Number(p.length) }];
+        break;
+      case 'play':
+        snake.value.push({
+          id: ++segId,
+          kind: p.kind === 'A' ? 'A' : 'food',
+          label: p.kind === 'A' ? (p.feed === 0 ? 'A·0' : `A·${p.feed}`) : String(p.feed),
+          by: e.by,
+          length: Number(p.length),
+        });
+        break;
+      case 'shed':
+        snake.value.push({ id: ++segId, kind: 'Q', label: 'Q', by: e.by, length: Number(p.length) });
+        break;
+      case 'coil':
+        snake.value.push({ id: ++segId, kind: 'K', label: 'K', by: e.by, length: len });
+        break;
+      case 'slip':
+        snake.value.push({ id: ++segId, kind: 'J', label: 'J', by: e.by, length: len });
+        break;
+      case 'scramble':
+        snake.value.push({ id: ++segId, kind: 'JOKER', label: '★', by: e.by, length: len });
+        break;
+    }
   }
 
   function describe(e: GameEvent): string {
@@ -140,7 +175,47 @@ export function useSnakeGame(opts: GameOptions = {}): SnakeGame {
     }
   }
 
-  /** Drive turns until the human must choose, or the round/game ends. */
+  // ------------------------------------------------------------------ persistence
+
+  function persist(): void {
+    saveGame({
+      state: state.value,
+      rng: rngBox.state,
+      difficulty: difficulty.value,
+      awaitingHuman: awaitingHuman.value,
+      legalMoves: legalMoves.value,
+      snake: snake.value,
+      log: log.value,
+    });
+  }
+
+  /** Restore a saved in-progress game. Returns false if there is nothing to resume. */
+  function loadSaved(): boolean {
+    const saved = loadSave();
+    if (!saved) return false;
+    rngBox = rngFromState(saved.rng);
+    state.value = saved.state;
+    difficulty.value = saved.difficulty;
+    awaitingHuman.value = saved.awaitingHuman;
+    legalMoves.value = saved.legalMoves;
+    snake.value = saved.snake;
+    log.value = saved.log;
+    lastEvents.value = [];
+    beat.value = null;
+    thinkingSeat.value = null;
+    gameOver.value = false;
+    loser.value = null;
+    segId = saved.snake.reduce((m, s) => Math.max(m, s.id), 0);
+    return true;
+  }
+
+  /** Continue a restored game if it was paused mid-flight (not on a human turn). */
+  async function resume(): Promise<void> {
+    if (state.value.phase === 'playing' && !awaitingHuman.value) await run();
+  }
+
+  // ------------------------------------------------------------------- turn loop
+
   async function run(): Promise<void> {
     if (ticking) return;
     ticking = true;
@@ -149,56 +224,64 @@ export function useSnakeGame(opts: GameOptions = {}): SnakeGame {
         const cur = state.value.current;
 
         if (cur === humanSeat) {
-          const prep = beginTurn(state.value, rng);
+          const prep = beginTurn(state.value, rngBox.rng);
           flushEvents();
           if (prep.status === 'awaiting') {
             legalMoves.value = prep.moves ?? [];
             awaitingHuman.value = true;
             return; // wait for play()
           }
-          // a stranded trick auto-resolved (or a bite ended the round)
-          await delay(botDelay);
+          await delay(botDelay); // a stranded trick auto-resolved (or a bite ended it)
           continue;
         }
 
-        // bot turn — show a thinking beat, then act
         thinkingSeat.value = cur;
         await delay(botDelay);
         thinkingSeat.value = null;
-        stepBot(cur);
+        stepBot();
         flushEvents();
         await delay(botDelay * 0.4);
       }
       onRoundEnd();
     } finally {
       ticking = false;
+      persist();
     }
   }
 
-  function stepBot(cur: number): void {
-    const prep = beginTurn(state.value, rng);
+  function stepBot(): void {
+    const prep = beginTurn(state.value, rngBox.rng);
     if (prep.status !== 'awaiting') return; // stranded/bite already handled
-    const mv = botChoose(state.value, rng);
+    const mv = botChoose(state.value, rngBox.rng);
     if (mv === null) return; // beginTurn already covers the no-move bite
-    void cur;
-    executeMove(state.value, mv.cardIndex, mv.aceValue, rng);
+    executeMove(state.value, mv.cardIndex, mv.aceValue, rngBox.rng);
   }
 
   function onRoundEnd(): void {
     const scores = state.value.players.map((pl) => pl.score);
     if (Math.max(...scores) >= 100) {
-      loser.value = pickLoser(scores, rng);
+      const who = pickLoser(scores, rngBox.rng);
+      loser.value = who;
       state.value.phase = 'gameOver';
       gameOver.value = true;
+      if (who === humanSeat) record.value.losses++;
+      else record.value.wins++;
+      saveRecord(record.value);
+      clearSave();
     }
     // otherwise stay in 'roundEnd'; the UI calls nextRound() to continue
   }
 
+  // ----------------------------------------------------------------- public API
+
   async function newGame(diff?: Difficulty): Promise<void> {
-    if (diff) difficulty.value = diff;
-    rng = mulberry32(opts.seed ?? Math.floor(Math.random() * 0x7fffffff));
-    const dealer = randInt(rng, n);
-    state.value = startRound(initialPlayers(), dealer, rng);
+    if (diff) {
+      difficulty.value = diff;
+      saveSettings({ difficulty: diff });
+    }
+    rngBox = rngFromState({ seed: opts.seed ?? Math.floor(Math.random() * 0x7fffffff), calls: 0 });
+    const dealer = randInt(rngBox.rng, n);
+    state.value = startRound(initialPlayers(), dealer, rngBox.rng);
     awaitingHuman.value = false;
     thinkingSeat.value = null;
     gameOver.value = false;
@@ -206,6 +289,9 @@ export function useSnakeGame(opts: GameOptions = {}): SnakeGame {
     log.value = [];
     lastEvents.value = [];
     legalMoves.value = [];
+    snake.value = [];
+    beat.value = null;
+    clearSave();
     flushEvents();
     await run();
   }
@@ -214,7 +300,7 @@ export function useSnakeGame(opts: GameOptions = {}): SnakeGame {
     if (!awaitingHuman.value) return;
     awaitingHuman.value = false;
     legalMoves.value = [];
-    executeMove(state.value, move.cardIndex, move.aceValue, rng);
+    executeMove(state.value, move.cardIndex, move.aceValue, rngBox.rng);
     flushEvents();
     await run();
   }
@@ -222,9 +308,10 @@ export function useSnakeGame(opts: GameOptions = {}): SnakeGame {
   async function nextRound(): Promise<void> {
     if (state.value.phase !== 'roundEnd') return;
     const dealer = mod(state.value.dealer + 1, n);
-    state.value = startRound(state.value.players, dealer, rng);
+    state.value = startRound(state.value.players, dealer, rngBox.rng);
     awaitingHuman.value = false;
     legalMoves.value = [];
+    beat.value = null;
     flushEvents();
     await run();
   }
@@ -238,6 +325,10 @@ export function useSnakeGame(opts: GameOptions = {}): SnakeGame {
     loser,
     log,
     lastEvents,
+    snake,
+    beat,
+    record,
+
     length: computed(() => state.value.length),
     maxLength: computed(() => state.value.maxLength),
     current: computed(() => state.value.current),
@@ -253,9 +344,16 @@ export function useSnakeGame(opts: GameOptions = {}): SnakeGame {
     }),
     roundResult: computed(() => state.value.roundResult),
     isHumanTurn: computed(() => awaitingHuman.value),
+    drawCount: computed(() => state.value.drawPile.length),
+
     playerName,
+    humanSeat,
     newGame,
     play,
     nextRound,
+    loadSaved,
+    resume,
   };
 }
+
+export type SnakeGame = ReturnType<typeof useSnakeGame>;

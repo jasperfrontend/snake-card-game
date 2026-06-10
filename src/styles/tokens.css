@@ -1,0 +1,60 @@
+/* Design tokens lifted directly from reference/snake-rulebook.html so the game
+   and the rulebook read as one product. */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --ink: #211c16;
+  --ink-soft: #5a4f40;
+  --bone: #f4eee1;
+  --bone-2: #ebe2cf;
+  --gold: #a87b2b;
+  --gold-bright: #d7b45c;
+  --cardback: #1b2a22;
+  --cardback-2: #24382c;
+  --red: #7a1f1f;
+
+  --display: 'Fraunces', Georgia, serif;
+  --body: 'Newsreader', Georgia, serif;
+  --mono: 'Space Mono', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bone);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.6;
+  background-image: radial-gradient(rgba(33, 28, 22, 0.025) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+/* Visible keyboard focus everywhere (quality floor). */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

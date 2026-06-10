@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildDeck } from '../deck';
-import { mulberry32 } from '../rng';
+import { mulberry32, rngFromState } from '../rng';
 import { legalMoves } from '../rules';
 import type { Card } from '../types';
 
@@ -32,6 +32,14 @@ describe('mulberry32', () => {
 
   it('differs across seeds', () => {
     expect(mulberry32(1)()).not.toBe(mulberry32(2)());
+  });
+
+  it('rngFromState resumes the stream exactly (for resume-on-refresh)', () => {
+    const fresh = mulberry32(2024);
+    for (let i = 0; i < 5; i++) fresh(); // advance a reference stream by 5
+    const { rng, state } = rngFromState({ seed: 2024, calls: 5 });
+    expect([rng(), rng(), rng()]).toEqual([fresh(), fresh(), fresh()]);
+    expect(state.calls).toBe(8); // tracked position advanced by the 3 draws
   });
 });
 

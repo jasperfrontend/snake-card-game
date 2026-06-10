@@ -4,7 +4,15 @@
 
 import { mulberry32 } from './rng';
 import { playGame, type ChoosePolicy } from './rules';
-import { smartPolicy } from '../bots/policy';
+import {
+  smartPolicy,
+  botPolicy,
+  configPolicy,
+  seatedPolicy,
+  NAIVE,
+  DIFFICULTY,
+} from '../bots/policy';
+import type { Difficulty } from './types';
 
 const TRICK_ORDER = ['Q', 'K', 'J', 'A', 'JOKER'] as const;
 
@@ -108,6 +116,59 @@ export function formatSummary(tag: string, n: number, s: BatchStats): string {
   return out.join('\n');
 }
 
+// --------------------------------------------------- Phase 2: difficulty reports
+
+/** Bite rate when all seats share one policy. */
+export function biteRate(nPlayers: number, nGames: number, seed: number, policy: ChoosePolicy): number {
+  const s = runBatch(nPlayers, nGames, seed, policy);
+  return s.endings.bite / s.roundsPlayed;
+}
+
+/**
+ * Win rate for a "human" proxy in seat 0 (played by the smart heuristic) against
+ * two bots of a given difficulty in seats 1 and 2. Win = the human is not the
+ * loser. Weaker bots should make the human win more often.
+ */
+export function humanWinRate(difficulty: Difficulty, nGames: number, seed: number): number {
+  const rng = mulberry32(seed);
+  const policy = seatedPolicy([smartPolicy, botPolicy(difficulty), botPolicy(difficulty)]);
+  let wins = 0;
+  for (let g = 0; g < nGames; g++) {
+    const { loser } = playGame(3, policy, rng);
+    if (loser !== 0) wins++;
+  }
+  return wins / nGames;
+}
+
+export function phase2Report(): string {
+  const out: string[] = [];
+  const GAMES = 300;
+
+  out.push('\n===== PHASE 2: BITE RATE BY OPPONENT STRENGTH (3 players, 300 games) =====');
+  out.push(`${'policy'.padStart(8)} ${'pinAware'.padStart(9)} ${'mathErr'.padStart(8)} ${'bite%'.padStart(7)}`);
+  const rows: Array<[string, number, number, ChoosePolicy]> = [
+    ['smart', 1.0, 0.0, smartPolicy],
+    ['hard', DIFFICULTY.hard.pinAwareness, DIFFICULTY.hard.mathError, botPolicy('hard')],
+    ['medium', DIFFICULTY.medium.pinAwareness, DIFFICULTY.medium.mathError, botPolicy('medium')],
+    ['easy', DIFFICULTY.easy.pinAwareness, DIFFICULTY.easy.mathError, botPolicy('easy')],
+    ['naive', NAIVE.pinAwareness, NAIVE.mathError, configPolicy(NAIVE)],
+  ];
+  for (const [name, pa, me, pol] of rows) {
+    const br = biteRate(3, GAMES, 1234, pol);
+    out.push(
+      `${name.padStart(8)} ${pa.toFixed(2).padStart(9)} ${me.toFixed(2).padStart(8)} ${((100 * br).toFixed(0) + '%').padStart(7)}`,
+    );
+  }
+
+  out.push('\n===== PHASE 2: HUMAN (smart) WIN RATE vs TWO BOTS (3 players, 300 games) =====');
+  out.push(`${'bots'.padStart(8)} ${'human win%'.padStart(11)}`);
+  for (const d of ['hard', 'medium', 'easy'] as const) {
+    const wr = humanWinRate(d, GAMES, 555);
+    out.push(`${d.padStart(8)} ${((100 * wr).toFixed(0) + '%').padStart(11)}`);
+  }
+  return out.join('\n');
+}
+
 // ------------------------------------------------------------------- entrypoint
 
 export function main(): void {
@@ -130,6 +191,8 @@ export function main(): void {
       `${String(n).padStart(8)} ${String(15 * n).padStart(5)} ${mean(s.roundsPerGame).toFixed(1).padStart(12)} ${mean(ppr).toFixed(1).padStart(12)} ${(mean(ppr) / n).toFixed(2).padStart(13)} ${(bite.toFixed(0) + '%').padStart(6)} ${(pin.toFixed(0) + '%').padStart(6)}`,
     );
   }
+
+  console.log(phase2Report());
 }
 
 // Invoked via the run-sim.ts wrapper (`npm run simulate`); see that file.

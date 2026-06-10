@@ -47,6 +47,12 @@ export interface GameEvent {
 
 export type Phase = 'playing' | 'roundEnd' | 'gameOver';
 
+/** Per-round bookkeeping accumulated as turns are taken. */
+export interface RoundMeta {
+  plays: number;
+  trickCounts: Record<string, number>;
+}
+
 export interface GameState {
   players: Player[];
   length: number;
@@ -60,6 +66,7 @@ export interface GameState {
   pendingSkip: boolean;
   phase: Phase;
   events: GameEvent[];
+  roundMeta: RoundMeta;
   /** populated once the round ends. */
   roundResult?: RoundResult;
 }

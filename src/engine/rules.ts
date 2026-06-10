@@ -100,6 +100,7 @@ export function cloneState(s: GameState): GameState {
     pendingSkip: s.pendingSkip,
     phase: s.phase,
     events: s.events.slice(),
+    roundMeta: { plays: s.roundMeta.plays, trickCounts: { ...s.roundMeta.trickCounts } },
     roundResult: s.roundResult,
   };
 }
@@ -113,18 +114,21 @@ export interface MoveOutcome {
 }
 
 /**
- * Execute a concrete move for the current player, MUTATING `state`:
- * play the card, apply its effect, check for a pin, refill an emptied hand,
- * and (unless pinned) advance the turn. Used both by the pure applyMove wrapper
- * and the headless round runner.
+ * Execute a concrete, already-legal move for the current player, MUTATING
+ * `state`: play the card, apply its effect, tally the trick, check for a pin,
+ * refill an emptied hand, and (unless pinned) advance the turn. Does NOT count
+ * the turn — that is done once per turn by beginTurn().
  */
-function executeMove(state: GameState, idx: number, aceVal: number | undefined, rng: Rng): MoveOutcome {
+export function executeMove(state: GameState, idx: number, aceVal: number | undefined, rng: Rng): MoveOutcome {
   const n = state.players.length;
   const cur = state.current;
   const hand = state.players[cur].hand;
 
   const card = hand.splice(idx, 1)[0];
   state.discardPile.push(card);
+  if (card.kind !== 'food') {
+    state.roundMeta.trickCounts[card.kind] = (state.roundMeta.trickCounts[card.kind] ?? 0) + 1;
+  }
 
   let feed = 0;
   switch (card.kind) {
@@ -173,6 +177,13 @@ function executeMove(state: GameState, idx: number, aceVal: number | undefined, 
     const pinKind: PinKind = card.kind === 'A' ? 'ace' : card.kind === 'food' ? 'food' : 'Q';
     state.events.push({ type: 'pin', by: cur, payload: { pinKind } });
     state.phase = 'roundEnd';
+    state.roundResult = {
+      ending: 'pin',
+      who: cur,
+      plays: state.roundMeta.plays,
+      pinKind,
+      trickCounts: state.roundMeta.trickCounts,
+    };
     return { kind: card.kind, feed, pinned: true };
   }
 
@@ -189,15 +200,96 @@ function executeMove(state: GameState, idx: number, aceVal: number | undefined, 
   return { kind: card.kind, feed, pinned: false };
 }
 
+/** End the round on a bite: the cornered player takes 10 points. MUTATES state. */
+export function endBite(state: GameState, who: number): void {
+  state.players[who].score += 10;
+  state.events.push({ type: 'bite', by: who });
+  state.phase = 'roundEnd';
+  state.roundResult = {
+    ending: 'bite',
+    who,
+    plays: state.roundMeta.plays,
+    trickCounts: state.roundMeta.trickCounts,
+  };
+}
+
+// ---------------------------------------------------------------- turn stepping
+
+export type TurnStatus =
+  | 'ended' // the round ended this turn (bite, or a pin from an auto-played card)
+  | 'resolved' // the turn auto-resolved (stranded-trick draw/play/pass) — no choice needed
+  | 'awaiting'; // a normal turn: the current player must choose from `moves`
+
+export interface TurnPrep {
+  status: TurnStatus;
+  moves?: LegalMove[];
+}
+
+/** Compute the ace value the stranded-trick path forces (mirrors snake_sim.py). */
+function strandedAceValue(drawnKind: Kind, length: number, mx: number): number | undefined {
+  if (drawnKind !== 'A') return undefined;
+  const room = mx - length;
+  return room >= 0 && room <= 9 ? room : 0;
+}
+
 /**
- * Pure primitive for the UI: apply an already-chosen, legal move and return a
- * NEW state. (Bite and stranded-trick handling live in the round runner.)
+ * Begin a turn, MUTATING state: count the turn, then handle the forced paths —
+ * the safety cap, the stranded-trick draw (auto-play / pass / bite), and the
+ * no-legal-move bite. Returns 'awaiting' (with the legal moves) only when the
+ * current player genuinely has a choice to make. Shared by the headless runner
+ * and the interactive UI, so both resolve forced situations identically.
  */
-export function applyMove(state: GameState, move: Move, rng: Rng): GameState {
-  const s = cloneState(state);
-  s.events = [];
-  executeMove(s, move.cardIndex, move.aceValue, rng);
-  return s;
+export function beginTurn(state: GameState, rng: Rng): TurnPrep {
+  state.roundMeta.plays++;
+  const cur = state.current;
+  if (state.roundMeta.plays > PLAY_CAP) {
+    endBite(state, cur);
+    return { status: 'ended' };
+  }
+
+  const hand = state.players[cur].hand;
+  const { length, maxLength: mx } = state;
+
+  // --- stranded trick: lone trick can't be played; draw one and try it ---
+  if (hand.length === 1 && hand[0].kind !== 'food') {
+    const drawn = drawCard(state, rng);
+    if (drawn === null) {
+      endBite(state, cur);
+      return { status: 'ended' };
+    }
+    hand.push(drawn);
+    if (drawn.kind === 'food') {
+      if (length + (drawn.value as number) <= mx) {
+        executeMove(state, 1, undefined, rng);
+      } else {
+        advanceTurn(state); // drawn card unplayable: keep both, pass
+      }
+    } else {
+      executeMove(state, 1, strandedAceValue(drawn.kind, length, mx), rng);
+    }
+    return { status: state.phase === 'playing' ? 'resolved' : 'ended' };
+  }
+
+  // --- normal turn ---
+  const moves = legalMoves(hand, length, mx);
+  if (moves.length === 0) {
+    endBite(state, cur);
+    return { status: 'ended' };
+  }
+  return { status: 'awaiting', moves };
+}
+
+/** Execute one full turn under a policy, MUTATING state. Used by the runner. */
+export function stepTurn(state: GameState, choose: ChoosePolicy, rng: Rng): GameState {
+  const prep = beginTurn(state, rng);
+  if (prep.status !== 'awaiting') return state;
+  const mv = choose(state, rng);
+  if (mv === null) {
+    endBite(state, state.current);
+    return state;
+  }
+  executeMove(state, mv.cardIndex, mv.aceValue, rng);
+  return state;
 }
 
 // ---------------------------------------------------------------- round runner
@@ -223,6 +315,7 @@ export function startRound(players: Player[], dealer: number, rng: Rng): GameSta
     pendingSkip: false,
     phase: 'playing',
     events: [],
+    roundMeta: { plays: 0, trickCounts: {} },
   };
 
   // seed starting length: flip until a food card turns up
@@ -241,82 +334,9 @@ export function startRound(players: Player[], dealer: number, rng: Rng): GameSta
   return state;
 }
 
-/** Compute the ace value the stranded-trick path forces (mirrors snake_sim.py). */
-function strandedAceValue(drawnKind: Kind, length: number, mx: number): number | undefined {
-  if (drawnKind !== 'A') return undefined;
-  const room = mx - length;
-  return room >= 0 && room <= 9 ? room : 0;
-}
-
-/**
- * Play one round to completion (a pin or a bite), MUTATING `state`. Scores are
- * applied as the round ends. Returns the same state with `roundResult` set.
- */
+/** Play one round to completion (a pin or a bite), MUTATING `state`. */
 export function playRound(state: GameState, choose: ChoosePolicy, rng: Rng): GameState {
-  const mx = state.maxLength;
-  const trickCounts: Record<string, number> = {};
-  let plays = 0;
-
-  const tallyTrick = (k: Kind) => {
-    if (k !== 'food') trickCounts[k] = (trickCounts[k] ?? 0) + 1;
-  };
-
-  const bite = (who: number): GameState => {
-    state.players[who].score += 10;
-    state.events.push({ type: 'bite', by: who });
-    state.phase = 'roundEnd';
-    state.roundResult = { ending: 'bite', who, plays, trickCounts };
-    return state;
-  };
-
-  while (state.phase === 'playing') {
-    plays++;
-    if (plays > PLAY_CAP) return bite(state.current);
-
-    const cur = state.current;
-    const hand = state.players[cur].hand;
-    let idx: number | undefined;
-    let aceVal: number | undefined;
-
-    // --- stranded trick: lone trick can't be played; draw one and try it ---
-    if (hand.length === 1 && hand[0].kind !== 'food') {
-      const drawn = drawCard(state, rng);
-      if (drawn === null) return bite(cur); // truly out of cards (degenerate)
-      hand.push(drawn);
-      if (drawn.kind === 'food') {
-        if (state.length + (drawn.value as number) <= mx) {
-          idx = 1;
-        } else {
-          // drawn card unplayable: keep both, pass
-          advanceTurn(state);
-          continue;
-        }
-      } else {
-        idx = 1;
-        aceVal = strandedAceValue(drawn.kind, state.length, mx);
-      }
-    } else {
-      const mv = choose(state, rng);
-      if (mv === null) return bite(cur); // BITE
-      idx = mv.cardIndex;
-      aceVal = mv.aceValue;
-    }
-
-    const playedKind = hand[idx].kind;
-    const outcome = executeMove(state, idx, aceVal, rng);
-    tallyTrick(playedKind);
-
-    if (outcome.pinned) {
-      state.roundResult = {
-        ending: 'pin',
-        who: cur,
-        plays,
-        pinKind: outcome.kind === 'A' ? 'ace' : outcome.kind === 'food' ? 'food' : 'Q',
-        trickCounts,
-      };
-    }
-  }
-
+  while (state.phase === 'playing') stepTurn(state, choose, rng);
   return state;
 }
 
@@ -330,11 +350,18 @@ export interface GameOutcome {
 }
 
 /**
- * Play a full game to a loss (first to 100 points). The loser tiebreak is
- * RANDOM among those tied at the top score — never by seat index. A seat-index
- * tiebreak fabricates a positional bias because a pin moves every other seat's
- * score together, so ties land disproportionately on low seats.
+ * Pick the loser: the top scorer, breaking ties RANDOMLY — never by seat index.
+ * A seat-index tiebreak fabricates a positional bias because a pin moves every
+ * other seat's score together, so ties land disproportionately on low seats.
  */
+export function pickLoser(scores: number[], rng: Rng): number {
+  const top = Math.max(...scores);
+  const tied: number[] = [];
+  for (let i = 0; i < scores.length; i++) if (scores[i] === top) tied.push(i);
+  return tied[randInt(rng, tied.length)];
+}
+
+/** Play a full game to a loss (first to 100 points). */
 export function playGame(n: number, choose: ChoosePolicy, rng: Rng): GameOutcome {
   let players: Player[] = Array.from({ length: n }, () => ({ hand: [], score: 0, isBot: true }));
   let dealer = randInt(rng, n);
@@ -351,12 +378,7 @@ export function playGame(n: number, choose: ChoosePolicy, rng: Rng): GameOutcome
   }
 
   const scores = players.map((p) => p.score);
-  const top = Math.max(...scores);
-  const tied: number[] = [];
-  for (let i = 0; i < n; i++) if (scores[i] === top) tied.push(i);
-  const loser = tied[randInt(rng, tied.length)];
-
-  return { scores, loser, rounds, roundResults };
+  return { scores, loser: pickLoser(scores, rng), rounds, roundResults };
 }
 
 /** Convenience: a fresh seeded rng. */

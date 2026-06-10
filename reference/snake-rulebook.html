@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake — Rules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#211C16;
+    --ink-soft:#5A4F40;
+    --bone:#F4EEE1;
+    --bone-2:#EBE2CF;
+    --gold:#A87B2B;
+    --gold-bright:#D7B45C;
+    --cardback:#1B2A22;
+    --cardback-2:#24382C;
+    --display:'Fraunces',Georgia,serif;
+    --body:'Newsreader',Georgia,serif;
+    --mono:'Space Mono','Courier New',monospace;
+  }
+
+  *{box-sizing:border-box;}
+
+  html{-webkit-text-size-adjust:100%;}
+
+  body{
+    margin:0;
+    background:var(--bone);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:18px;
+    line-height:1.65;
+    background-image:radial-gradient(rgba(33,28,22,0.025) 1px,transparent 1px);
+    background-size:4px 4px;
+  }
+
+  .wrap{
+    max-width:840px;
+    margin:0 auto;
+    padding:clamp(28px,6vw,80px) clamp(20px,5vw,56px) 64px;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{text-align:center;padding-top:8px;}
+  .hero .crest{width:84px;height:auto;margin:0 auto 18px;display:block;}
+  .hero h1{
+    font-family:var(--display);
+    font-weight:900;
+    font-optical-sizing:auto;
+    font-size:clamp(64px,16vw,140px);
+    letter-spacing:0.14em;
+    margin:0 0 2px;
+    padding-left:0.14em;
+    line-height:0.92;
+    background:linear-gradient(95deg,var(--gold) 0%,var(--gold-bright) 38%,var(--gold) 60%,var(--gold-bright) 100%);
+    background-size:200% auto;
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    color:var(--gold);
+    animation:sheen 9s linear infinite;
+  }
+  @keyframes sheen{to{background-position:200% center;}}
+  .hero .tag{
+    font-family:var(--mono);
+    text-transform:uppercase;
+    letter-spacing:0.42em;
+    font-size:12px;
+    color:var(--ink-soft);
+    padding-left:0.42em;
+    margin:0;
+  }
+  .hero .meta{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-top:14px;
+  }
+
+  .rule{
+    display:flex;align-items:center;gap:16px;
+    margin:40px 0 4px;
+    color:var(--gold);
+  }
+  .rule::before,.rule::after{content:"";height:1px;flex:1;background:linear-gradient(to right,transparent,var(--gold),transparent);}
+  .rule svg{width:30px;height:18px;flex:none;}
+
+  .lede{
+    text-align:center;
+    font-size:clamp(20px,2.6vw,25px);
+    line-height:1.5;
+    max-width:30ch;
+    margin:24px auto 8px;
+    color:var(--ink);
+  }
+  .lede b{color:var(--gold);font-weight:600;}
+
+  /* ---------- Sections ---------- */
+  section{margin-top:54px;}
+  .eyebrow{
+    font-family:var(--mono);
+    text-transform:uppercase;
+    letter-spacing:0.34em;
+    font-size:11px;
+    color:var(--gold);
+    margin:0 0 6px;
+  }
+  h2{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:clamp(28px,4.6vw,38px);
+    line-height:1.05;
+    margin:0 0 18px;
+  }
+  h2 .num{color:var(--bone-2);}
+  p{margin:0 0 16px;}
+  p.last{margin-bottom:0;}
+  strong{font-weight:500;color:var(--ink);}
+  .kw{color:var(--gold);font-weight:500;}
+
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:620px){.twocol{grid-template-columns:1fr;}}
+
+  /* ---------- Cards display ---------- */
+  .deck-note{font-family:var(--mono);font-size:12px;letter-spacing:0.06em;color:var(--ink-soft);margin:-6px 0 22px;}
+
+  .food-row{
+    display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;margin:6px 0 10px;
+  }
+  .pip{
+    width:42px;height:60px;flex:none;
+    border:1px solid var(--gold);
+    border-radius:6px;
+    background:var(--bone);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-weight:600;font-size:21px;
+    color:var(--ink);
+    box-shadow:0 1px 0 rgba(168,123,43,0.25);
+  }
+
+  .trickgrid{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:8px;
+  }
+  @media (max-width:620px){.trickgrid{grid-template-columns:repeat(2,1fr);}}
+  .tcard{
+    border:1px solid var(--gold);
+    border-radius:10px;
+    background:linear-gradient(160deg,var(--bone) 0%,var(--bone-2) 100%);
+    padding:14px 12px 16px;
+    text-align:center;
+    position:relative;
+    transition:transform .25s ease,box-shadow .25s ease;
+  }
+  .tcard:hover{transform:translateY(-4px);box-shadow:0 10px 22px -12px rgba(33,28,22,0.4);}
+  .tcard .rank{
+    font-family:var(--display);font-weight:900;font-size:34px;line-height:1;
+    color:var(--gold);
+  }
+  .tcard .name{
+    font-family:var(--mono);text-transform:uppercase;letter-spacing:0.16em;
+    font-size:10px;color:var(--ink-soft);margin:8px 0 9px;
+  }
+  .tcard .does{font-size:14px;line-height:1.4;color:var(--ink);}
+
+  /* ---------- Bite / Pin panels ---------- */
+  .endgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:620px){.endgrid{grid-template-columns:1fr;}}
+  .end{
+    border-radius:12px;padding:22px 22px 24px;border:1px solid var(--gold);
+    background:var(--bone);
+  }
+  .end h3{
+    font-family:var(--display);font-weight:600;font-size:23px;margin:0 0 4px;
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .end h3 .sub{font-family:var(--mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);}
+  .end p{font-size:15.5px;margin:0;}
+  .end.bad{background:linear-gradient(160deg,#F4EEE1,#F0E6D2);}
+  .end.good{background:linear-gradient(160deg,#F4EEE1,#EFEAD7);}
+
+  /* ---------- Example replays (card back) ---------- */
+  .replays{margin-top:14px;display:grid;gap:18px;}
+  .replay{
+    background:
+      linear-gradient(155deg,var(--cardback-2),var(--cardback));
+    border:1px solid rgba(215,180,92,0.28);
+    border-radius:14px;
+    padding:22px 24px 24px;
+    color:#E8DFC9;
+    box-shadow:0 14px 30px -20px rgba(0,0,0,0.7);
+  }
+  .replay .label{
+    font-family:var(--mono);text-transform:uppercase;letter-spacing:0.22em;
+    font-size:10.5px;color:var(--gold-bright);margin:0 0 4px;
+  }
+  .replay h4{
+    font-family:var(--display);font-weight:600;font-size:21px;color:#F6EFDD;margin:0 0 14px;
+  }
+  .replay p{font-size:15.5px;line-height:1.6;margin:0 0 10px;color:#DED4BD;}
+  .replay p.last{margin-bottom:0;}
+  .replay .turns{margin:0 0 12px;display:grid;gap:7px;}
+  .step{display:flex;align-items:center;gap:12px;font-size:15px;}
+  .step .who{font-family:var(--mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#9FB3A2;min-width:62px;}
+  .step .act{flex:1;color:#E8DFC9;}
+  .step .len{
+    font-family:var(--mono);font-weight:700;font-size:14px;color:#15201A;
+    background:var(--gold-bright);border-radius:5px;padding:2px 9px;min-width:46px;text-align:center;
+  }
+  .replay code{
+    font-family:var(--mono);font-size:0.85em;color:var(--gold-bright);
+    background:rgba(215,180,92,0.10);padding:1px 6px;border-radius:4px;
+  }
+  .replay .verdict{
+    margin-top:14px;padding-top:13px;border-top:1px solid rgba(215,180,92,0.22);
+    font-family:var(--body);font-size:15px;color:#F2E9D2;
+  }
+  .replay .verdict b{color:var(--gold-bright);font-weight:500;}
+
+  /* ---------- Footer ---------- */
+  footer{
+    margin-top:64px;text-align:center;
+  }
+  footer .frule{display:flex;align-items:center;gap:16px;color:var(--gold);margin-bottom:18px;}
+  footer .frule::before,footer .frule::after{content:"";height:1px;flex:1;background:linear-gradient(to right,transparent,var(--gold),transparent);}
+  footer svg{width:38px;height:22px;}
+  footer p{font-family:var(--mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-soft);margin:0;}
+
+  a{color:var(--gold);}
+
+  @media (prefers-reduced-motion:reduce){
+    .hero h1{animation:none;}
+    .tcard{transition:none;}
+  }
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{background:#fff;font-size:12pt;}
+    .wrap{max-width:none;padding:0;}
+    .hero h1{-webkit-text-fill-color:var(--gold);animation:none;}
+    .replay{
+      background:#fff;color:#211C16;border:1.5px solid var(--gold);box-shadow:none;
+      page-break-inside:avoid;
+    }
+    .replay h4,.replay .verdict,.replay .verdict b{color:#211C16;}
+    .replay p,.step .act{color:#3a332a;}
+    .step .who{color:#7a6f5d;}
+    .step .len{background:#211C16;color:#fff;}
+    .tcard:hover{transform:none;box-shadow:none;}
+    section{page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <svg class="crest" viewBox="0 0 80 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M40 8 C22 8 18 26 34 32 C50 38 58 28 54 18 C51 11 44 8 40 8 Z"
+            stroke="url(#g)" stroke-width="3" stroke-linejoin="round" fill="none"/>
+      <path d="M44 30 C64 40 60 60 38 62 C16 64 18 86 40 90 C62 94 60 112 42 114"
+            stroke="url(#g)" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+      <circle cx="44" cy="20" r="2.4" fill="#D7B45C"/>
+      <path d="M40 8 L36 2 M40 8 L44 2" stroke="#A87B2B" stroke-width="2" stroke-linecap="round"/>
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="80" y2="120" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#D7B45C"/><stop offset="0.5" stop-color="#A87B2B"/><stop offset="1" stop-color="#D7B45C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <h1>SNAKE</h1>
+    <p class="tag">A push-your-luck card game</p>
+    <p class="meta">3 to 6 players · one deck · prod v1</p>
+  </header>
+
+  <div class="rule">
+    <svg viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M2 10 C8 2 12 18 20 10 C28 2 32 18 38 10" stroke="#A87B2B" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="37" cy="10" r="1.6" fill="#A87B2B"/>
+    </svg>
+  </div>
+
+  <p class="lede">A snake grows down the middle of the table. Everyone feeds it, nobody wants to be the one who <b>overfeeds</b> it. Feed it too far and it <b>bites</b>. Get bitten too often and the snake takes you out.</p>
+
+  <!-- GOAL -->
+  <section>
+    <p class="eyebrow">The goal</p>
+    <h2>Don't get eaten</h2>
+    <p>Every card you play feeds the snake and makes it a little longer. The snake has a maximum length. Push it past that and it bites whoever was holding the card. A bite costs you points, and in this game <strong>points are bad</strong>. They are snakebite.</p>
+    <p class="last">The first player to reach <span class="kw">100 points</span> has been finished off by the snake. They lose. Everyone still standing wins together. So the whole game is one long game of not-it.</p>
+  </section>
+
+  <!-- WHAT YOU NEED -->
+  <section>
+    <p class="eyebrow">What you need</p>
+    <h2>One deck, three to six friends</h2>
+    <div class="twocol">
+      <p>A standard deck with both jokers left in, 54 cards. Three to six players. Something to keep score on, a pen and paper is plenty.</p>
+      <p class="last">Pick a dealer for the first round. After every round the deal passes one seat to the left. Play goes around to the left until something changes it.</p>
+    </div>
+  </section>
+
+  <!-- THE CARDS -->
+  <section>
+    <p class="eyebrow">The cards</p>
+    <h2>Food and tricks</h2>
+    <p class="deck-note">Number cards feed the snake. Face cards, aces and jokers bend the rules.</p>
+
+    <p><strong>Food (2 through 10).</strong> Worth its face value. Play one and the snake grows by exactly that much. A 10 is the biggest single bite you can take out of the room left at the top, and you cannot aim it.</p>
+    <div class="food-row">
+      <div class="pip">2</div><div class="pip">3</div><div class="pip">4</div><div class="pip">5</div>
+      <div class="pip">6</div><div class="pip">7</div><div class="pip">8</div><div class="pip">9</div><div class="pip">10</div>
+    </div>
+
+    <p style="margin-top:24px;"><strong>Tricks.</strong> These carry no food value. Each one does a job instead.</p>
+    <div class="trickgrid">
+      <div class="tcard"><div class="rank">K</div><div class="name">Coil</div><div class="does">Reverse the direction of play.</div></div>
+      <div class="tcard"><div class="rank">J</div><div class="name">Slip</div><div class="does">Skip the next player.</div></div>
+      <div class="tcard"><div class="rank">Q</div><div class="name">Shed</div><div class="does">Halve the snake's length, rounded down.</div></div>
+      <div class="tcard"><div class="rank">A</div><div class="name">Strike</div><div class="does">Wild. Count it as any value from 0 to 9. Played as 0 it is a feint and nothing changes.</div></div>
+      <div class="tcard"><div class="rank">★</div><div class="name">Scramble</div><div class="does">The next player bins their whole hand and draws 4 fresh. Bliss or disaster.</div></div>
+    </div>
+  </section>
+
+  <!-- A TURN -->
+  <section>
+    <p class="eyebrow">A turn</p>
+    <h2>Play one card, say the number</h2>
+    <p>You start with 4 cards. On your turn you play exactly one of them, feeding the snake or pulling a trick, and then you say the snake's new length out loud so the table can hear it.</p>
+    <p>You do not draw after every card. You play your hand all the way down, and only when it is empty do you draw a fresh 4. So everyone can watch your options shrink from four cards to one, which tells them when you are about to be in trouble.</p>
+    <p>There are only two things you are not allowed to do:</p>
+    <div class="twocol" style="margin-top:6px;">
+      <div class="end"><h3>Rule one <span class="sub">no overshoot</span></h3><p>You cannot play a card that pushes the snake over its maximum length.</p></div>
+      <div class="end"><h3>Rule two <span class="sub">no trick last</span></h3><p>You cannot play a trick (K, Q, J, A or joker) as the last card in your hand. Always keep a number card for the bottom.</p></div>
+    </div>
+    <p style="margin-top:18px;" class="last">If a trick is somehow the only card you have left, draw one card and play that instead if you can. A lucky pull there can even win you the round on the spot.</p>
+  </section>
+
+  <!-- ENDING A ROUND -->
+  <section>
+    <p class="eyebrow">Ending a round</p>
+    <h2>The bite or the pin</h2>
+    <p>A round always ends one of two ways, and they could not be more different.</p>
+    <div class="endgrid">
+      <div class="end bad">
+        <h3>The Bite <span class="sub">you lose the round</span></h3>
+        <p>It is your turn and you are cornered. Every card you could play would shove the snake over the top, and you have no trick to wriggle out. The snake bites you. <strong>Take 10 points.</strong></p>
+      </div>
+      <div class="end good">
+        <h3>The Pin <span class="sub">you win the round</span></h3>
+        <p>You land the snake on its maximum <em>exactly</em>. You have pinned it. <strong>You score 0, everyone else takes 5.</strong> This is what the wild Ace is for.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAX LENGTH -->
+  <section>
+    <p class="eyebrow">The maximum length</p>
+    <h2>Fifteen times the table</h2>
+    <p>Count the heads at the table and multiply by fifteen. That is how long the snake can get before it bites. Easy to work out, even a few drinks in.</p>
+    <div class="food-row" style="gap:10px;margin-top:10px;">
+      <div class="pip" style="width:auto;padding:0 14px;font-size:15px;font-family:var(--mono);">3p&nbsp;·&nbsp;45</div>
+      <div class="pip" style="width:auto;padding:0 14px;font-size:15px;font-family:var(--mono);">4p&nbsp;·&nbsp;60</div>
+      <div class="pip" style="width:auto;padding:0 14px;font-size:15px;font-family:var(--mono);">5p&nbsp;·&nbsp;75</div>
+      <div class="pip" style="width:auto;padding:0 14px;font-size:15px;font-family:var(--mono);">6p&nbsp;·&nbsp;90</div>
+    </div>
+    <p style="margin-top:16px;" class="last">To start a round, flip the top card and use its number as the snake's starting length. If you flip a trick, set it aside and flip again until you get a number.</p>
+  </section>
+
+  <!-- CALL THE LENGTH -->
+  <section>
+    <p class="eyebrow">Call the length</p>
+    <h2>Say it or lose it</h2>
+    <p>Every time you play, you say the snake's new total out loud. This is harder than it sounds, because the Queen halves the snake and the Ace can be any value, so you cannot just count the cards on the table. You have to keep the real number in your head.</p>
+    <p class="last">If it is your turn and you cannot say the length, you draw a card and the question passes back to the player before you. If nobody at the table can remember it, the snake <span class="kw">resets to 10</span> and play carries on. Mumble at your own risk.</p>
+  </section>
+
+  <!-- EXAMPLES -->
+  <section>
+    <p class="eyebrow">See it played</p>
+    <h2>Five moments at the table</h2>
+    <p>Three players, so the snake's maximum is 45 throughout.</p>
+
+    <div class="replays">
+
+      <div class="replay">
+        <p class="label">Example · a normal climb</p>
+        <h4>Feeding the snake</h4>
+        <div class="turns">
+          <div class="step"><span class="who">Start</span><span class="act">Flip a 6. The snake begins at six.</span><span class="len">6</span></div>
+          <div class="step"><span class="who">Pim</span><span class="act">Plays an 8.</span><span class="len">14</span></div>
+          <div class="step"><span class="who">Sanne</span><span class="act">Plays a 5.</span><span class="len">19</span></div>
+          <div class="step"><span class="who">Tariq</span><span class="act">Plays a Queen. The snake sheds half its length.</span><span class="len">9</span></div>
+          <div class="step"><span class="who">Pim</span><span class="act">Plays a 10.</span><span class="len">19</span></div>
+        </div>
+        <p class="last">And on it climbs. One Queen at the right moment can drag a long snake right back down and keep a round alive for ages.</p>
+      </div>
+
+      <div class="replay">
+        <p class="label">Example · the bite</p>
+        <h4>Cornered with nowhere to go</h4>
+        <div class="turns">
+          <div class="step"><span class="who">Snake</span><span class="act">Sitting at 41. The max is 45, so only 4 of room is left.</span><span class="len">41</span></div>
+        </div>
+        <p>It is your turn and your hand is a <code>6</code>, a <code>7</code> and a <code>9</code>, with no trick to save you. Every card overshoots: 41 and 6 is 47, the 7 makes 48, the 9 makes 50. Nothing fits and you cannot wriggle out.</p>
+        <p class="verdict">The snake <b>bites you. Take 10 points</b> and the round is over.</p>
+      </div>
+
+      <div class="replay">
+        <p class="label">Example · the pin</p>
+        <h4>Threading the needle</h4>
+        <div class="turns">
+          <div class="step"><span class="who">Snake</span><span class="act">At 38, with 7 of room left to the max of 45.</span><span class="len">38</span></div>
+        </div>
+        <p>You are holding an <code>Ace</code> and a <code>3</code>. You play the Ace and call it a 7. 38 and 7 lands on 45 on the nose.</p>
+        <p class="verdict">Pinned. <b>You score 0, and everyone else takes 5.</b> The cleanest win in the game.</p>
+      </div>
+
+      <div class="replay">
+        <p class="label">Example · the spike and the counter</p>
+        <h4>An Ace as a weapon</h4>
+        <div class="turns">
+          <div class="step"><span class="who">You</span><span class="act">Snake is at 32. You play an Ace as a 7 to shove it up at your neighbour.</span><span class="len">39</span></div>
+        </div>
+        <p>At 39 the next player is in deep water. But the attack is a gamble on what they are holding. If they have a <code>Queen</code>, they shed the snake back to 19 and your whole spike melts away. If they have a <code>King</code>, they reverse the table and the 39 comes straight back at you.</p>
+        <p class="verdict">Aggression near the top is a <b>bet on the table</b>, never a sure thing.</p>
+      </div>
+
+      <div class="replay">
+        <p class="label">Example · the joker</p>
+        <h4>A pure bully move</h4>
+        <p>The snake is creeping high and the player after you is sitting pretty, hoarding two Queens to save themselves later. You play a <code>Joker</code>.</p>
+        <p>They throw away their entire hand, Queens and all, and draw four total strangers off the deck.</p>
+        <p class="verdict">Maybe the new hand is better. Probably it is not. <b>Nobody knows until they look</b>, and that is exactly the point.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <div class="frule">
+      <svg viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M2 10 C8 2 12 18 20 10 C28 2 32 18 38 10" stroke="#A87B2B" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="37" cy="10" r="1.6" fill="#A87B2B"/>
+        <path d="M38 8 l3 -2 M38 12 l3 2" stroke="#A87B2B" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <p>Feed it well · Snake · prod v1</p>
+  </footer>
+
+</div>
+</body>
+</html>

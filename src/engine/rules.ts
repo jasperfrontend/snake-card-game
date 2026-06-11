@@ -332,7 +332,7 @@ export function startRound(
   };
 
   // seed starting length: flip until a food card turns up
-  // eslint-disable-next-line no-constant-condition
+
   while (true) {
     const c = drawCard(state, rng);
     if (!c) break; // degenerate; deck has 36 food cards so this never trips

@@ -119,7 +119,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   position: fixed;
   inset: 0;
   z-index: 80;
-  background: rgba(27, 42, 34, 0.55);
+  background: rgb(27 42 34 / 55%);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: flex-start;
@@ -127,6 +127,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   padding: 24px 16px;
   overflow-y: auto;
 }
+
 .sheet {
   position: relative;
   width: 100%;
@@ -135,10 +136,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   border: 1px solid var(--gold);
   border-radius: 14px;
   padding: 28px 28px 24px;
-  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.7);
-  background-image: radial-gradient(rgba(33, 28, 22, 0.03) 1px, transparent 1px);
+  box-shadow: 0 30px 70px -30px rgb(0 0 0 / 70%);
+  background-image: radial-gradient(rgb(33 28 22 / 3%) 1px, transparent 1px);
   background-size: 4px 4px;
 }
+
 .x {
   position: absolute;
   top: 14px;
@@ -153,6 +155,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   line-height: 1;
   cursor: pointer;
 }
+
 .eyebrow {
   font-family: var(--mono), monospace;
   text-transform: uppercase;
@@ -161,6 +164,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   color: var(--gold);
   margin: 0 0 6px;
 }
+
 h2 {
   font-family: var(--display), serif;
   font-weight: 600;
@@ -172,28 +176,32 @@ h2 {
 .row {
   margin-bottom: 18px;
 }
+
 .row-head {
   display: flex;
   align-items: baseline;
   gap: 10px;
   margin-bottom: 7px;
 }
+
 .r-label {
   font-family: var(--display), serif;
   font-weight: 600;
   font-size: 17px;
   color: var(--ink);
 }
+
 .r-tag {
   font-family: var(--mono), monospace;
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-soft);
-  border: 1px solid rgba(168, 123, 43, 0.4);
+  border: 1px solid rgb(168 123 43 / 40%);
   border-radius: 999px;
   padding: 1px 7px;
 }
+
 .r-tag.live {
   color: var(--gold);
   border-color: var(--gold);
@@ -205,6 +213,7 @@ h2 {
   grid-auto-columns: 1fr;
   gap: 7px;
 }
+
 .seg-btn {
   display: flex;
   flex-direction: column;
@@ -220,19 +229,23 @@ h2 {
     background 0.15s ease,
     transform 0.1s ease;
 }
+
 .seg-btn:hover {
   border-color: var(--gold-bright);
 }
+
 .seg-btn.on {
   background: var(--gold);
   border-color: var(--gold);
   color: var(--bone);
 }
+
 .s-main {
   font-family: var(--mono), monospace;
   font-size: 13px;
   font-weight: 700;
 }
+
 .s-hint {
   font-family: var(--mono), monospace;
   font-size: 9px;
@@ -246,11 +259,13 @@ h2 {
   color: var(--ink-soft);
   margin: 4px 0 20px;
 }
+
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
+
 button.ghost,
 button.primary {
   font-family: var(--mono), monospace;
@@ -260,10 +275,12 @@ button.primary {
   border-radius: 6px;
   cursor: pointer;
 }
+
 button.ghost {
   background: transparent;
   color: var(--ink);
 }
+
 button.primary {
   background: var(--gold);
   color: var(--bone);

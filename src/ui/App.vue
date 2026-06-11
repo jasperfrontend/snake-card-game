@@ -107,16 +107,14 @@ const turnInfo = computed(() => {
   <div class="wrap" :class="{ 'shake-on': activeBeat?.type === 'bite' }">
     <!-- beat overlays -->
     <Transition name="pop">
-      <div
-        v-if="activeBeat && beatIsBig"
-        class="beat-big"
-        :class="activeBeat.type"
-        role="status"
-        aria-live="polite"
-      >
+      <div v-if="activeBeat && beatIsBig" class="beat-big" :class="activeBeat.type" role="status" aria-live="polite">
         <span class="word">{{ beatText[activeBeat.type] }}</span>
         <span class="sub">
-          {{ activeBeat.type === 'pin' ? `${game.playerName(activeBeat.by)} threaded it` : `${game.playerName(activeBeat.by)} got cornered` }}
+          {{
+            activeBeat.type === 'pin'
+              ? `${game.playerName(activeBeat.by)} threaded it`
+              : `${game.playerName(activeBeat.by)} got cornered`
+          }}
         </span>
       </div>
     </Transition>
@@ -136,7 +134,9 @@ const turnInfo = computed(() => {
       </div>
       <div class="controls">
         <span class="record" :title="`${games} ${games === 1 ? 'game' : 'games'} played`">
-          <b>{{ game.record.value.wins }}</b>W · <b>{{ game.record.value.losses }}</b>L
+          <b>{{ game.record.value.wins }}</b
+          >W · <b>{{ game.record.value.losses }}</b
+          >L
         </span>
         <button class="ghost" @click="showSettings = true">Settings</button>
         <button class="ghost" @click="showRules = true">Rules</button>
@@ -186,7 +186,10 @@ const turnInfo = computed(() => {
         v-for="(p, i) in game.state.value.players"
         :key="i"
         class="seat"
-        :class="{ active: game.current.value === i && !game.gameOver.value && !game.roundResult.value, you: i === humanSeat }"
+        :class="{
+          active: game.current.value === i && !game.gameOver.value && !game.roundResult.value,
+          you: i === humanSeat,
+        }"
       >
         <span v-if="game.current.value === i && !game.gameOver.value && !game.roundResult.value" class="now">
           ▶ now
@@ -210,7 +213,9 @@ const turnInfo = computed(() => {
       class="flow"
       :class="{ rev: game.direction.value === -1 }"
       role="img"
-      :aria-label="game.direction.value === 1 ? 'play order runs left to right' : 'play order is reversed, right to left'"
+      :aria-label="
+        game.direction.value === 1 ? 'play order runs left to right' : 'play order is reversed, right to left'
+      "
     >
       <span class="shaft"></span>
       <span class="head"></span>
@@ -263,7 +268,9 @@ const turnInfo = computed(() => {
       </div>
 
       <p
-        v-else-if="!game.awaitingHuman.value && !game.gameOver.value && !game.roundResult.value && !game.strandedNote.value"
+        v-else-if="
+          !game.awaitingHuman.value && !game.gameOver.value && !game.roundResult.value && !game.strandedNote.value
+        "
         class="waiting"
       >
         <span v-if="game.thinkingSeat.value !== null">{{ game.playerName(game.thinkingSeat.value) }} is thinking…</span>
@@ -277,7 +284,11 @@ const turnInfo = computed(() => {
       </p>
     </section>
 
-    <section v-if="game.roundResult.value && !game.gameOver.value" class="banner" :class="game.roundResult.value.ending">
+    <section
+      v-if="game.roundResult.value && !game.gameOver.value"
+      class="banner"
+      :class="game.roundResult.value.ending"
+    >
       <strong v-if="game.roundResult.value.ending === 'pin'">
         {{ game.playerName(game.roundResult.value.who) }} pinned the snake. Everyone else +5.
       </strong>
@@ -287,7 +298,9 @@ const turnInfo = computed(() => {
 
     <section v-if="game.gameOver.value" class="banner over">
       <div class="over-msg">
-        <strong v-if="game.loser.value === humanSeat">The snake got you — you lose. Highest score takes the bite.</strong>
+        <strong v-if="game.loser.value === humanSeat"
+          >The snake got you — you lose. Highest score takes the bite.</strong
+        >
         <strong v-else>{{ game.playerName(game.loser.value ?? 0) }} hit 100 first — you survive. You win!</strong>
         <span class="over-sub">Lowest score wins · {{ standings }}</span>
       </div>
@@ -297,8 +310,8 @@ const turnInfo = computed(() => {
     <section class="tally" aria-label="Pins and bites this game">
       <p class="eyebrow">Pins &amp; bites this game</p>
       <p class="tally-note">
-        Lowest score wins. A pin loads <b>+5</b> on everyone else; a bite costs <b>you +10</b> — one bite
-        hurts like two enemy pins.
+        Lowest score wins. A pin loads <b>+5</b> on everyone else; a bite costs <b>you +10</b> — one bite hurts like two
+        enemy pins.
       </p>
       <div class="tally-grid">
         <div
@@ -309,7 +322,10 @@ const turnInfo = computed(() => {
         >
           <span class="t-name">{{ game.playerName(i) }}</span>
           <span class="t-pins">{{ pins }}</span>
-          <span class="t-sub">pin{{ pins === 1 ? '' : 's' }}<template v-if="game.biteCounts.value[i]"> · {{ game.biteCounts.value[i] }} bit</template></span>
+          <span class="t-sub"
+            >pin{{ pins === 1 ? '' : 's'
+            }}<template v-if="game.biteCounts.value[i]"> · {{ game.biteCounts.value[i] }} bit</template></span
+          >
         </div>
       </div>
     </section>
@@ -337,16 +353,19 @@ const turnInfo = computed(() => {
   gap: 10px 14px;
   flex-wrap: wrap;
 }
+
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
   flex: 0 0 auto;
 }
+
 .crest {
   width: 34px;
   height: 18px;
 }
+
 .bar h1 {
   font-family: var(--display), serif;
   font-weight: 900;
@@ -355,11 +374,13 @@ const turnInfo = computed(() => {
   margin: 0;
   font-size: 32px;
   background: linear-gradient(95deg, var(--gold), var(--gold-bright) 50%, var(--gold));
+  /* stylelint-disable-next-line property-no-vendor-prefix -- Safari needs the prefix for text clipping */
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: var(--gold);
 }
+
 .controls {
   display: flex;
   gap: 8px 10px;
@@ -369,13 +390,16 @@ const turnInfo = computed(() => {
   font-family: var(--mono), monospace;
   font-size: 12px;
 }
+
 .record {
   color: var(--ink-soft);
   white-space: nowrap;
 }
+
 .record b {
   color: var(--ink);
 }
+
 .diff {
   display: flex;
   gap: 5px;
@@ -385,6 +409,7 @@ const turnInfo = computed(() => {
   color: var(--ink-soft);
   white-space: nowrap;
 }
+
 button,
 select {
   font-family: var(--mono), monospace;
@@ -396,20 +421,24 @@ select {
   color: var(--ink);
   cursor: pointer;
 }
+
 button:hover:not(:disabled),
 select:hover {
   border-color: var(--gold-bright);
 }
+
 button:disabled {
   opacity: 0.38;
   cursor: default;
 }
+
 button.primary {
   background: var(--gold);
   color: var(--bone);
   border-color: var(--gold);
   font-weight: 700;
 }
+
 button.ghost {
   background: transparent;
 }
@@ -418,6 +447,7 @@ button.ghost {
 .fade-leave-active {
   transition: opacity 0.2s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
@@ -437,50 +467,59 @@ button.ghost {
   letter-spacing: 0.04em;
   background: var(--cardback);
   color: var(--bone);
-  border: 1px solid rgba(215, 180, 92, 0.35);
-  box-shadow: 0 10px 24px -16px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgb(215 180 92 / 35%);
+  box-shadow: 0 10px 24px -16px rgb(0 0 0 / 60%);
 }
+
 .turnbar.you {
   background: var(--gold);
   color: var(--cardback);
   border-color: var(--gold-bright);
   font-weight: 700;
 }
+
 .turnbar .pip {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: var(--gold-bright);
-  box-shadow: 0 0 0 0 rgba(215, 180, 92, 0.7);
+  box-shadow: 0 0 0 0 rgb(215 180 92 / 70%);
   animation: pip 1.4s ease-out infinite;
 }
+
 .turnbar.you .pip {
   background: var(--cardback);
-  box-shadow: 0 0 0 0 rgba(27, 42, 34, 0.6);
-  animation-name: pipDark;
+  box-shadow: 0 0 0 0 rgb(27 42 34 / 60%);
+  animation-name: pip-dark;
 }
+
 @keyframes pip {
   0% {
-    box-shadow: 0 0 0 0 rgba(215, 180, 92, 0.7);
+    box-shadow: 0 0 0 0 rgb(215 180 92 / 70%);
   }
+
   100% {
-    box-shadow: 0 0 0 9px rgba(215, 180, 92, 0);
+    box-shadow: 0 0 0 9px rgb(215 180 92 / 0%);
   }
 }
-@keyframes pipDark {
+
+@keyframes pip-dark {
   0% {
-    box-shadow: 0 0 0 0 rgba(27, 42, 34, 0.6);
+    box-shadow: 0 0 0 0 rgb(27 42 34 / 60%);
   }
+
   100% {
-    box-shadow: 0 0 0 9px rgba(27, 42, 34, 0);
+    box-shadow: 0 0 0 9px rgb(27 42 34 / 0%);
   }
 }
+
 .turn-enter-active,
 .turn-leave-active {
   transition:
     opacity 0.2s ease,
     transform 0.2s ease;
 }
+
 .turn-enter-from,
 .turn-leave-to {
   opacity: 0;
@@ -493,6 +532,7 @@ button.ghost {
   gap: 12px;
   margin-top: 22px;
 }
+
 .seat {
   position: relative;
   border: 1.5px solid var(--gold);
@@ -504,29 +544,33 @@ button.ghost {
     transform 0.2s ease,
     background 0.2s ease;
 }
+
 .seats .seat.active {
   border-color: var(--gold-bright);
   border-width: 2px;
   background: linear-gradient(160deg, #fbf3df, #f4e8c8);
   transform: translateY(-4px) scale(1.025);
   box-shadow:
-    0 0 0 3px rgba(215, 180, 92, 0.45),
-    0 14px 28px -14px rgba(168, 123, 43, 0.7);
+    0 0 0 3px rgb(215 180 92 / 45%),
+    0 14px 28px -14px rgb(168 123 43 / 70%);
   animation: seatpulse 1.6s ease-in-out infinite;
 }
+
 @keyframes seatpulse {
   0%,
   100% {
     box-shadow:
-      0 0 0 3px rgba(215, 180, 92, 0.35),
-      0 14px 28px -16px rgba(168, 123, 43, 0.6);
+      0 0 0 3px rgb(215 180 92 / 35%),
+      0 14px 28px -16px rgb(168 123 43 / 60%);
   }
+
   50% {
     box-shadow:
-      0 0 0 6px rgba(215, 180, 92, 0.6),
-      0 16px 30px -14px rgba(168, 123, 43, 0.75);
+      0 0 0 6px rgb(215 180 92 / 60%),
+      0 16px 30px -14px rgb(168 123 43 / 75%);
   }
 }
+
 .seat .now {
   position: absolute;
   top: -11px;
@@ -540,21 +584,25 @@ button.ghost {
   background: var(--gold-bright);
   border-radius: 999px;
   padding: 2px 9px;
-  box-shadow: 0 4px 10px -4px rgba(168, 123, 43, 0.7);
+  box-shadow: 0 4px 10px -4px rgb(168 123 43 / 70%);
 }
+
 .seat.you {
   background: linear-gradient(160deg, var(--bone), #efead7);
 }
+
 .seat-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
 }
+
 .seat-head .score {
   font-family: var(--mono), monospace;
   font-weight: 700;
   color: var(--red);
 }
+
 .seat-sub {
   font-family: var(--mono), monospace;
   font-size: 11px;
@@ -563,23 +611,29 @@ button.ghost {
   gap: 8px;
   margin-top: 2px;
 }
+
 .think {
   color: var(--gold);
 }
+
 .dots {
   animation: blink 1.1s steps(3) infinite;
 }
+
 @keyframes blink {
   0% {
     opacity: 0.2;
   }
+
   50% {
     opacity: 1;
   }
 }
+
 .turn {
   color: var(--ink);
 }
+
 .backs {
   display: flex;
   gap: 3px;
@@ -597,14 +651,16 @@ button.ghost {
   height: 18px;
   margin: 16px 0 2px;
 }
+
 .flow .shaft {
   flex: 1;
   height: 3px;
   border-radius: 2px;
-  background: linear-gradient(90deg, rgba(168, 123, 43, 0.12), var(--gold) 75%);
+  background: linear-gradient(90deg, rgb(168 123 43 / 12%), var(--gold) 75%);
   position: relative;
   overflow: hidden;
 }
+
 .flow .shaft::after {
   content: '';
   position: absolute;
@@ -613,6 +669,7 @@ button.ghost {
   opacity: 0.45;
   animation: flow 0.9s linear infinite;
 }
+
 .flow .head {
   width: 0;
   height: 0;
@@ -621,6 +678,7 @@ button.ghost {
   border-left: 14px solid var(--gold);
   margin-left: -1px;
 }
+
 .flow .tag {
   position: absolute;
   left: 50%;
@@ -634,18 +692,23 @@ button.ghost {
   text-transform: uppercase;
   color: var(--ink-soft);
 }
+
 .flow.rev {
   flex-direction: row-reverse;
 }
+
 .flow.rev .shaft {
-  background: linear-gradient(270deg, rgba(168, 123, 43, 0.12), var(--gold) 75%);
+  background: linear-gradient(270deg, rgb(168 123 43 / 12%), var(--gold) 75%);
 }
+
 .flow.rev .shaft::after {
   animation-direction: reverse;
 }
+
 .flow.rev .head {
   transform: rotate(180deg);
 }
+
 @keyframes flow {
   to {
     background-position: 18px 0;
@@ -655,6 +718,7 @@ button.ghost {
 .hand-wrap {
   margin-top: 28px;
 }
+
 .eyebrow {
   font-family: var(--mono), monospace;
   text-transform: uppercase;
@@ -663,12 +727,14 @@ button.ghost {
   color: var(--gold);
   margin: 0 0 8px;
 }
+
 .hand {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
 }
+
 .forfeit {
   margin-left: 6px;
   height: 70px;
@@ -688,14 +754,17 @@ button.ghost {
     background 0.15s ease,
     transform 0.12s ease;
 }
+
 .forfeit:hover {
-  background: rgba(168, 123, 43, 0.08);
+  background: rgb(168 123 43 / 8%);
   transform: translateY(-3px);
 }
+
 .forfeit .ff-icon {
   font-size: 20px;
   line-height: 1;
 }
+
 .forfeit .ff-text {
   font-family: var(--mono), monospace;
   font-size: 11px;
@@ -703,6 +772,7 @@ button.ghost {
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
+
 .forfeit .ff-sub {
   font-family: var(--mono), monospace;
   font-size: 9px;
@@ -710,7 +780,9 @@ button.ghost {
   text-transform: uppercase;
   color: var(--ink-soft);
 }
+
 .hand-card {
+  position: relative;
   padding: 2px;
   border: 2px solid transparent;
   border-radius: 9px;
@@ -719,17 +791,21 @@ button.ghost {
     transform 0.15s ease,
     border-color 0.15s ease;
 }
+
 .hand-card.legal {
   border-color: var(--gold);
 }
+
 .hand-card.legal:hover {
   transform: translateY(-5px);
 }
+
 .hand-card.picking {
   border-color: var(--gold-bright);
   box-shadow: 0 0 0 2px var(--gold-bright);
   transform: translateY(-5px);
 }
+
 .ace-picker {
   margin-top: 14px;
   display: flex;
@@ -739,6 +815,7 @@ button.ghost {
   font-family: var(--mono), monospace;
   font-size: 12px;
 }
+
 /* ---- stranded trick: a clear, paced moment, then the normal hand ---- */
 .stranded {
   margin-top: 24px;
@@ -747,8 +824,9 @@ button.ghost {
   border-radius: 12px;
   background: linear-gradient(160deg, #fbf3df, #f3e7c9);
   text-align: center;
-  box-shadow: 0 14px 30px -18px rgba(168, 123, 43, 0.7);
+  box-shadow: 0 14px 30px -18px rgb(168 123 43 / 70%);
 }
+
 .stranded .s-note {
   font-family: var(--body), serif;
   font-size: 17px;
@@ -757,12 +835,10 @@ button.ghost {
 }
 
 /* the freshly drawn card, highlighted in your hand */
-.hand-card {
-  position: relative;
-}
 .hand-card.just-drawn {
   animation: dealin 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
 .drawn-tag {
   position: absolute;
   top: -8px;
@@ -778,20 +854,23 @@ button.ghost {
   background: var(--gold-bright);
   border-radius: 999px;
   padding: 1px 6px;
-  box-shadow: 0 3px 8px -3px rgba(168, 123, 43, 0.7);
+  box-shadow: 0 3px 8px -3px rgb(168 123 43 / 70%);
 }
+
 @keyframes dealin {
   from {
     opacity: 0;
     transform: translateY(-14px) rotate(-4deg) scale(0.85);
   }
 }
+
 .waiting {
   font-family: var(--mono), monospace;
   font-size: 12px;
   color: var(--ink-soft);
   margin-top: 14px;
 }
+
 .your-turn {
   color: var(--gold);
 }
@@ -809,28 +888,34 @@ button.ghost {
   font-family: var(--body), serif;
   font-size: 17px;
 }
+
 .banner.pin {
   background: #eef0e6;
 }
+
 .banner.bite {
   background: #f3e7d6;
 }
+
 .banner.over {
   background: linear-gradient(155deg, var(--cardback-2), var(--cardback));
   color: var(--bone);
-  border-color: rgba(215, 180, 92, 0.4);
+  border-color: rgb(215 180 92 / 40%);
 }
+
 .over-msg {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+
 .over-sub {
   font-family: var(--mono), monospace;
   font-size: 12px;
   letter-spacing: 0.04em;
   color: var(--gold-bright);
 }
+
 .banner.over .primary {
   background: var(--gold-bright);
   border-color: var(--gold-bright);
@@ -840,22 +925,26 @@ button.ghost {
 .tally {
   margin-top: 28px;
 }
+
 .tally-note {
   font-size: 13px;
   color: var(--ink-soft);
   margin: -2px 0 12px;
 }
+
 .tally-note b {
   color: var(--ink);
   font-weight: 600;
 }
+
 .tally-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
 }
+
 .tally-cell {
-  border: 1px solid rgba(168, 123, 43, 0.4);
+  border: 1px solid rgb(168 123 43 / 40%);
   border-radius: 10px;
   padding: 10px 12px;
   background: var(--bone);
@@ -864,13 +953,16 @@ button.ghost {
   align-items: center;
   text-align: center;
 }
+
 .tally-cell.you {
   background: linear-gradient(160deg, var(--bone), #efead7);
   border-color: var(--gold);
 }
+
 .tally-cell.lead {
   box-shadow: inset 0 0 0 1.5px var(--gold-bright);
 }
+
 .tally-cell .t-name {
   font-family: var(--mono), monospace;
   font-size: 11px;
@@ -878,6 +970,7 @@ button.ghost {
   letter-spacing: 0.1em;
   color: var(--ink-soft);
 }
+
 .tally-cell .t-pins {
   font-family: var(--display), serif;
   font-weight: 900;
@@ -885,6 +978,7 @@ button.ghost {
   line-height: 1.05;
   color: var(--gold);
 }
+
 .tally-cell .t-sub {
   font-family: var(--mono), monospace;
   font-size: 10px;
@@ -895,6 +989,7 @@ button.ghost {
 .log {
   margin-top: 30px;
 }
+
 .log summary {
   font-family: var(--mono), monospace;
   text-transform: uppercase;
@@ -903,6 +998,7 @@ button.ghost {
   color: var(--gold);
   cursor: pointer;
 }
+
 .log ul {
   list-style: none;
   padding: 0;
@@ -911,9 +1007,10 @@ button.ghost {
   font-size: 12px;
   color: var(--ink-soft);
 }
+
 .log li {
   padding: 3px 0;
-  border-bottom: 1px dashed rgba(168, 123, 43, 0.18);
+  border-bottom: 1px dashed rgb(168 123 43 / 18%);
 }
 
 /* ---- beats ---- */
@@ -929,6 +1026,7 @@ button.ghost {
   pointer-events: none;
   text-align: center;
 }
+
 .beat-big .word {
   font-family: var(--display), serif;
   font-weight: 900;
@@ -936,26 +1034,32 @@ button.ghost {
   letter-spacing: 0.06em;
   line-height: 1;
 }
+
 .beat-big .sub {
   font-family: var(--mono), monospace;
   text-transform: uppercase;
   letter-spacing: 0.24em;
   font-size: 12px;
 }
+
 .beat-big.pin .word {
   color: var(--gold);
-  text-shadow: 0 6px 30px rgba(168, 123, 43, 0.45);
+  text-shadow: 0 6px 30px rgb(168 123 43 / 45%);
 }
+
 .beat-big.pin .sub {
   color: var(--gold);
 }
+
 .beat-big.bite .word {
   color: var(--red);
-  text-shadow: 0 6px 30px rgba(122, 31, 31, 0.4);
+  text-shadow: 0 6px 30px rgb(122 31 31 / 40%);
 }
+
 .beat-big.bite .sub {
   color: var(--red);
 }
+
 .beat-small {
   position: fixed;
   top: 16px;
@@ -971,32 +1075,37 @@ button.ghost {
   border-radius: 999px;
   background: var(--cardback);
   color: var(--gold-bright);
-  border: 1px solid rgba(215, 180, 92, 0.4);
-  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgb(215 180 92 / 40%);
+  box-shadow: 0 8px 20px -10px rgb(0 0 0 / 60%);
 }
 
 .pop-enter-active {
   animation: pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
 .pop-leave-active {
   animation: pop 0.3s reverse;
 }
+
 @keyframes pop {
   from {
     opacity: 0;
     transform: scale(0.6);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
   }
 }
+
 .toast-enter-active,
 .toast-leave-active {
   transition:
     opacity 0.25s ease,
     transform 0.25s ease;
 }
+
 .toast-enter-from,
 .toast-leave-to {
   opacity: 0;
@@ -1006,34 +1115,41 @@ button.ghost {
 .shake-on {
   animation: shake 0.4s ease;
 }
+
 @keyframes shake {
   0%,
   100% {
     transform: translateX(0);
   }
+
   20% {
     transform: translateX(-7px);
   }
+
   40% {
     transform: translateX(7px);
   }
+
   60% {
     transform: translateX(-4px);
   }
+
   80% {
     transform: translateX(4px);
   }
 }
 
-@media (max-width: 620px) {
+@media (width <= 620px) {
   .bar {
     flex-direction: column;
     align-items: stretch;
   }
+
   .controls {
     width: 100%;
     justify-content: space-between;
   }
+
   .bar h1 {
     font-size: 28px;
   }

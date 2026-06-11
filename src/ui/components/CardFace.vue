@@ -46,21 +46,25 @@ const isTrick = computed(() => !!props.card && props.card.kind !== 'food');
   justify-content: center;
   font-family: var(--display, Georgia, serif);
   color: var(--ink, #211c16);
-  box-shadow: 0 1px 0 rgba(168, 123, 43, 0.25);
+  box-shadow: 0 1px 0 rgb(168 123 43 / 25%);
   flex: none;
 }
+
 .card.trick .rank {
   color: var(--gold, #a87b2b);
 }
+
 .card.down {
   background: linear-gradient(155deg, #24382c, #1b2a22);
-  border-color: rgba(215, 180, 92, 0.3);
+  border-color: rgb(215 180 92 / 30%);
 }
+
 .rank {
   font-weight: 900;
   font-size: 22px;
   line-height: 1;
 }
+
 .name {
   font-family: var(--mono, monospace);
   text-transform: uppercase;

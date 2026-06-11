@@ -474,10 +474,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
 
   /** True only on a full, freshly-dealt hand the human hasn't mulliganed yet. */
   const canForfeit = computed(
-    () =>
-      awaitingHuman.value &&
-      !forfeitUsed.value &&
-      state.value.players[humanSeat].hand.length === handSize.value,
+    () => awaitingHuman.value && !forfeitUsed.value && state.value.players[humanSeat].hand.length === handSize.value,
   );
 
   /** Forfeit the whole hand for a fresh one; this spends your turn (a chosen Joker). */

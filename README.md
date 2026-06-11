@@ -27,12 +27,20 @@ wild **Ace** (Strike) is how you thread the needle for a pin.
 ## Develop
 
 ```bash
-npm test             # Vitest: engine, stats, bots, composable, persistence (27 tests)
+npm test             # Vitest: engine, stats, bots, composable, persistence (31 tests)
 npm run typecheck    # vue-tsc --noEmit
+npm run lint         # eslint (Vue + TS) and stylelint
+npm run lint:fix     # auto-fix lint issues
+npm run format       # prettier --write
+npm run check        # typecheck + lint + format check + tests (what CI runs)
 npm run simulate     # headless Monte-Carlo report (the engine oracle)
 npm run build        # type-check + static bundle into dist/
 npm run preview      # serve the production build locally
 ```
+
+Linting is enforced in CI (`.github/workflows/ci.yml`) on every push and PR:
+ESLint (`@vue/eslint-config-typescript`, essential Vue rules), Stylelint
+(`stylelint-config-standard` + Vue), and Prettier own formatting.
 
 ## Architecture
 

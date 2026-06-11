@@ -14,8 +14,8 @@
   --cardback-2: #24382c;
   --red: #7a1f1f;
 
-  --display: 'Fraunces', Georgia, serif;
-  --body: 'Newsreader', Georgia, serif;
+  --display: 'Fraunces', georgia, serif;
+  --body: 'Newsreader', georgia, serif;
   --mono: 'Space Mono', 'Courier New', monospace;
 }
 
@@ -24,7 +24,7 @@
 }
 
 html {
-  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -34,7 +34,7 @@ body {
   font-family: var(--body), serif;
   font-size: 17px;
   line-height: 1.6;
-  background-image: radial-gradient(rgba(33, 28, 22, 0.025) 1px, transparent 1px);
+  background-image: radial-gradient(rgb(33 28 22 / 2.5%) 1px, transparent 1px);
   background-size: 4px 4px;
 }
 
@@ -44,6 +44,7 @@ body {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
 :focus:not(:focus-visible) {
   outline: none;
 }

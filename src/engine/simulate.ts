@@ -4,14 +4,7 @@
 
 import { mulberry32 } from './rng';
 import { playGame, type ChoosePolicy } from './rules';
-import {
-  smartPolicy,
-  botPolicy,
-  configPolicy,
-  seatedPolicy,
-  NAIVE,
-  DIFFICULTY,
-} from '../bots/policy';
+import { smartPolicy, botPolicy, configPolicy, seatedPolicy, NAIVE, DIFFICULTY } from '../bots/policy';
 import type { Difficulty } from './types';
 
 const TRICK_ORDER = ['Q', 'K', 'J', 'A', 'JOKER'] as const;

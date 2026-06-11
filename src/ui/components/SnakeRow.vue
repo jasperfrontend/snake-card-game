@@ -34,7 +34,10 @@ const room = computed(() => props.maxLength - props.length);
           v-for="(s, i) in segments"
           :key="s.id"
           class="seg"
-          :class="[s.kind === 'food' ? 'food' : s.kind === 'start' ? 'start' : 'trick', { head: i === segments.length - 1 }]"
+          :class="[
+            s.kind === 'food' ? 'food' : s.kind === 'start' ? 'start' : 'trick',
+            { head: i === segments.length - 1 },
+          ]"
           :title="`length ${s.length}`"
         >
           {{ s.label }}
@@ -51,6 +54,7 @@ const room = computed(() => props.maxLength - props.length);
 .snake {
   text-align: center;
 }
+
 .readout {
   font-family: var(--mono), monospace;
   display: flex;
@@ -58,16 +62,19 @@ const room = computed(() => props.maxLength - props.length);
   align-items: baseline;
   justify-content: center;
 }
+
 .len {
   font-size: clamp(40px, 11vw, 60px);
   font-weight: 700;
   color: var(--ink);
   line-height: 1;
 }
+
 .max {
   font-size: 22px;
   color: var(--ink-soft);
 }
+
 .dir {
   font-size: 26px;
   color: var(--gold);
@@ -83,14 +90,17 @@ const room = computed(() => props.maxLength - props.length);
   max-width: 540px;
   overflow: hidden;
 }
+
 .fill {
   height: 100%;
   background: linear-gradient(90deg, var(--gold), var(--gold-bright));
   transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
 .fill.tight {
   background: linear-gradient(90deg, var(--red), #b8442f);
 }
+
 .goal {
   position: absolute;
   top: -3px;
@@ -110,6 +120,7 @@ const room = computed(() => props.maxLength - props.length);
   max-width: 620px;
   min-height: 40px;
 }
+
 .seg {
   min-width: 30px;
   height: 40px;
@@ -124,21 +135,25 @@ const room = computed(() => props.maxLength - props.length);
   border: 1px solid var(--gold);
   background: var(--bone);
   color: var(--ink);
-  box-shadow: 0 1px 0 rgba(168, 123, 43, 0.25);
+  box-shadow: 0 1px 0 rgb(168 123 43 / 25%);
 }
+
 .seg.trick {
   background: linear-gradient(160deg, #fbf4e3, var(--bone-2));
   color: var(--gold);
 }
+
 .seg.start {
   background: var(--cardback);
   color: var(--gold-bright);
   border-color: var(--cardback-2);
 }
+
 .seg.head {
   transform: translateY(-3px);
-  box-shadow: 0 6px 14px -8px rgba(33, 28, 22, 0.6);
+  box-shadow: 0 6px 14px -8px rgb(33 28 22 / 60%);
 }
+
 .hint {
   font-size: 13px;
   color: var(--ink-soft);
@@ -150,6 +165,7 @@ const room = computed(() => props.maxLength - props.length);
     transform 0.3s ease,
     opacity 0.3s ease;
 }
+
 .seg-enter-from {
   opacity: 0;
   transform: translateY(-10px) scale(0.85);

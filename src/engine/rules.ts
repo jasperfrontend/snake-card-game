@@ -92,6 +92,7 @@ export function cloneState(s: GameState): GameState {
     players: s.players.map((p) => ({ ...p, hand: p.hand.map(cloneCard) })),
     length: s.length,
     maxLength: s.maxLength,
+    handSize: s.handSize,
     direction: s.direction,
     current: s.current,
     drawPile: s.drawPile.map(cloneCard),
@@ -159,7 +160,7 @@ export function executeMove(state: GameState, idx: number, aceVal: number | unde
       const dumped = state.players[victim].hand;
       state.discardPile.push(...dumped);
       const fresh: Card[] = [];
-      for (let k = 0; k < 4; k++) {
+      for (let k = 0; k < state.handSize; k++) {
         const d = drawCard(state, rng);
         if (d) fresh.push(d);
       }
@@ -189,7 +190,7 @@ export function executeMove(state: GameState, idx: number, aceVal: number | unde
 
   // --- refill an emptied hand (only a food card can be your last play) ---
   if (hand.length === 0) {
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < state.handSize; k++) {
       const d = drawCard(state, rng);
       if (d) hand.push(d);
     }
@@ -297,25 +298,28 @@ export function stepTurn(state: GameState, choose: ChoosePolicy, rng: Rng): Game
 /** The rulebook's default snake-length-per-player. The Python oracle uses this;
  *  the playable game may pass a roomier value. */
 export const DEFAULT_MAX_PER_PLAYER = 15;
+export const DEFAULT_HAND_SIZE = 4;
 
-/** Build a fresh round: deal 4 each, seed the starting length from a food flip. */
+/** Build a fresh round: deal a hand each, seed the starting length from a food flip. */
 export function startRound(
   players: Player[],
   dealer: number,
   rng: Rng,
   maxPerPlayer = DEFAULT_MAX_PER_PLAYER,
+  handSize = DEFAULT_HAND_SIZE,
 ): GameState {
   const n = players.length;
   const deck = shuffle(buildDeck(), rng);
   const dealt: Player[] = players.map((p) => ({ ...p, hand: [] }));
   for (let p = 0; p < n; p++) {
-    for (let k = 0; k < 4; k++) dealt[p].hand.push(deck.pop() as Card);
+    for (let k = 0; k < handSize; k++) dealt[p].hand.push(deck.pop() as Card);
   }
 
   const state: GameState = {
     players: dealt,
     length: 0,
     maxLength: maxPerPlayer * n,
+    handSize,
     direction: 1,
     current: mod(dealer + 1, n),
     drawPile: deck,
@@ -376,6 +380,7 @@ export function playGame(
   choose: ChoosePolicy,
   rng: Rng,
   maxPerPlayer = DEFAULT_MAX_PER_PLAYER,
+  handSize = DEFAULT_HAND_SIZE,
 ): GameOutcome {
   let players: Player[] = Array.from({ length: n }, () => ({ hand: [], score: 0, isBot: true }));
   let dealer = randInt(rng, n);
@@ -383,7 +388,7 @@ export function playGame(
   const roundResults: RoundResult[] = [];
 
   while (Math.max(...players.map((p) => p.score)) < 100 && rounds < 1000) {
-    const state = startRound(players, dealer, rng, maxPerPlayer);
+    const state = startRound(players, dealer, rng, maxPerPlayer, handSize);
     const final = playRound(state, choose, rng);
     players = final.players;
     if (final.roundResult) roundResults.push(final.roundResult);

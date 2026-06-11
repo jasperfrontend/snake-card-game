@@ -64,6 +64,7 @@ export interface GameOptions {
   difficulty?: Difficulty; // bot strength, default 'medium'
   speed?: GameSpeed; // pacing, default from settings ('normal')
   maxPerPlayer?: number; // snake max = this × players (rulebook 15; game uses 23)
+  handSize?: number; // cards dealt/refilled per hand (rulebook 4)
   humanSeat?: number; // which seat the human plays, default 0
   seed?: number; // fix for deterministic play/tests; otherwise random
   /** Shorthand: sets both think and settle to this. Pass 0 for instant (tests). */
@@ -106,6 +107,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const settings0 = loadSettings();
   const difficulty = ref<Difficulty>(opts.difficulty ?? settings0.difficulty);
   const speed = ref<GameSpeed>(opts.speed ?? settings0.speed);
+  const handSize = ref<number>(opts.handSize ?? settings0.handSize); // applies on the next new game
 
   // A fixed think/settle override (used by headless tests) wins; otherwise the
   // pace follows the live `speed` setting and can change mid-game.
@@ -117,7 +119,9 @@ export function useSnakeGame(opts: GameOptions = {}) {
 
   let rngBox = rngFromState({ seed: opts.seed ?? 1, calls: 0 });
 
-  const state = ref<GameState>(startRound(initialPlayers(), 0, rngBox.rng, maxPerPlayer)) as Ref<GameState>;
+  const state = ref<GameState>(
+    startRound(initialPlayers(), 0, rngBox.rng, maxPerPlayer, handSize.value),
+  ) as Ref<GameState>;
   const awaitingHuman = ref(false);
   const thinkingSeat = ref<number | null>(null);
   const gameOver = ref(false);
@@ -261,6 +265,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     if (!saved) return false;
     rngBox = rngFromState(saved.rng);
     state.value = saved.state;
+    if (!state.value.handSize) state.value.handSize = handSize.value; // saves predating handSize
     difficulty.value = saved.difficulty;
     awaitingHuman.value = saved.awaitingHuman;
     legalMoves.value = saved.legalMoves;
@@ -402,7 +407,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
   // ----------------------------------------------------------------- public API
 
   function persistSettings(): void {
-    saveSettings({ difficulty: difficulty.value, speed: speed.value });
+    saveSettings({ difficulty: difficulty.value, speed: speed.value, handSize: handSize.value });
   }
 
   /** Change the bot pacing live (takes effect on the next bot turn). */
@@ -411,12 +416,24 @@ export function useSnakeGame(opts: GameOptions = {}) {
     persistSettings();
   }
 
+  /** Change bot strength; takes effect on the next new game. */
+  function setDifficulty(d: Difficulty): void {
+    difficulty.value = d;
+    persistSettings();
+  }
+
+  /** Change hand size; takes effect on the next new game. */
+  function setHandSize(h: number): void {
+    handSize.value = h;
+    persistSettings();
+  }
+
   async function newGame(diff?: Difficulty): Promise<void> {
     if (diff) difficulty.value = diff;
     persistSettings();
     rngBox = rngFromState({ seed: opts.seed ?? Math.floor(Math.random() * 0x7fffffff), calls: 0 });
     const dealer = randInt(rngBox.rng, n);
-    state.value = startRound(initialPlayers(), dealer, rngBox.rng, maxPerPlayer);
+    state.value = startRound(initialPlayers(), dealer, rngBox.rng, maxPerPlayer, handSize.value);
     awaitingHuman.value = false;
     thinkingSeat.value = null;
     gameOver.value = false;
@@ -447,7 +464,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
   async function nextRound(): Promise<void> {
     if (state.value.phase !== 'roundEnd') return;
     const dealer = mod(state.value.dealer + 1, n);
-    state.value = startRound(state.value.players, dealer, rngBox.rng, maxPerPlayer);
+    state.value = startRound(state.value.players, dealer, rngBox.rng, maxPerPlayer, handSize.value);
     awaitingHuman.value = false;
     legalMoves.value = [];
     beat.value = null;
@@ -469,6 +486,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     beat,
     record,
     speed,
+    handSize,
     strandedNote,
     strandedDrawn,
     pinCounts,
@@ -497,6 +515,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
     play,
     nextRound,
     setSpeed,
+    setDifficulty,
+    setHandSize,
     loadSaved,
     resume,
   };

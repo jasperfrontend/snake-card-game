@@ -57,6 +57,8 @@ export interface GameState {
   players: Player[];
   length: number;
   maxLength: number;
+  /** cards dealt/refilled to a hand (rulebook 4). */
+  handSize: number;
   direction: 1 | -1;
   current: number;
   drawPile: Card[];

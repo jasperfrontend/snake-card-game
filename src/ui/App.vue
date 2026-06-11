@@ -4,30 +4,26 @@ import { useSnakeGame, type Beat } from './composables/useSnakeGame';
 import CardFace from './components/CardFace.vue';
 import SnakeRow from './components/SnakeRow.vue';
 import RulesModal from './components/RulesModal.vue';
-import type { Difficulty } from '../engine/types';
+import SettingsModal from './components/SettingsModal.vue';
 
 const game = useSnakeGame({ players: 3, interactiveStranded: true, maxPerPlayer: 23 });
-const difficulty = ref<Difficulty>(game.difficulty.value);
-const speed = ref(game.speed.value);
 const selectedAce = ref<number | null>(null);
 const showRules = ref(false);
-
-function changeSpeed() {
-  game.setSpeed(speed.value);
-}
+const showSettings = ref(false);
 
 onMounted(() => {
-  if (game.loadSaved()) {
-    difficulty.value = game.difficulty.value;
-    game.resume();
-  } else {
-    game.newGame(difficulty.value);
-  }
+  if (game.loadSaved()) game.resume();
+  else game.newGame();
 });
 
 function start() {
   selectedAce.value = null;
-  game.newGame(difficulty.value);
+  game.newGame();
+}
+
+function settingsNewGame() {
+  showSettings.value = false;
+  start();
 }
 
 const humanSeat = game.humanSeat;
@@ -141,22 +137,7 @@ const turnInfo = computed(() => {
         <span class="record" :title="`${games} ${games === 1 ? 'game' : 'games'} played`">
           <b>{{ game.record.value.wins }}</b>W · <b>{{ game.record.value.losses }}</b>L
         </span>
-        <label class="diff">
-          Bots
-          <select v-model="difficulty">
-            <option value="easy">easy</option>
-            <option value="medium">medium</option>
-            <option value="hard">hard</option>
-          </select>
-        </label>
-        <label class="diff">
-          Speed
-          <select v-model="speed" @change="changeSpeed">
-            <option value="slow">slow</option>
-            <option value="normal">normal</option>
-            <option value="fast">fast</option>
-          </select>
-        </label>
+        <button class="ghost" @click="showSettings = true">Settings</button>
         <button class="ghost" @click="showRules = true">Rules</button>
         <button class="primary" @click="start">New game</button>
       </div>
@@ -168,6 +149,20 @@ const turnInfo = computed(() => {
         :max-length="game.maxLength.value"
         :players="game.state.value.players.length"
         @close="showRules = false"
+      />
+    </Transition>
+
+    <Transition name="fade">
+      <SettingsModal
+        v-if="showSettings"
+        :difficulty="game.difficulty.value"
+        :speed="game.speed.value"
+        :hand-size="game.handSize.value"
+        @update:difficulty="game.setDifficulty($event)"
+        @update:speed="game.setSpeed($event)"
+        @update:handSize="game.setHandSize($event)"
+        @new-game="settingsNewGame"
+        @close="showSettings = false"
       />
     </Transition>
 

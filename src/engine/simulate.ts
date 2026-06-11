@@ -34,6 +34,7 @@ export function runBatch(
   seed: number,
   policy: ChoosePolicy = smartPolicy,
   maxPerPlayer = 15,
+  handSize = 4,
 ): BatchStats {
   const rng = mulberry32(seed);
   const stats: BatchStats = {
@@ -49,7 +50,7 @@ export function runBatch(
   };
 
   for (let g = 0; g < nGames; g++) {
-    const { loser, rounds, roundResults } = playGame(nPlayers, policy, rng, maxPerPlayer);
+    const { loser, rounds, roundResults } = playGame(nPlayers, policy, rng, maxPerPlayer, handSize);
     stats.roundsPerGame.push(rounds);
     stats.loserSeat[loser]++;
     for (const r of roundResults) {

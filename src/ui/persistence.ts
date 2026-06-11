@@ -14,6 +14,7 @@ const K_SAVE = 'snake:save:v1';
 export interface Settings {
   difficulty: Difficulty;
   speed: GameSpeed;
+  handSize: number;
 }
 export interface Record {
   wins: number;
@@ -79,7 +80,7 @@ function remove(key: string): void {
 
 export function loadSettings(): Settings {
   const s = read<Partial<Settings>>(K_SETTINGS);
-  return { difficulty: s?.difficulty ?? 'medium', speed: s?.speed ?? 'normal' };
+  return { difficulty: s?.difficulty ?? 'medium', speed: s?.speed ?? 'normal', handSize: s?.handSize ?? 4 };
 }
 export function saveSettings(settings: Settings): void {
   write(K_SETTINGS, settings);

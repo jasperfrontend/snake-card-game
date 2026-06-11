@@ -68,6 +68,25 @@ describe('useSnakeGame — full game', () => {
     expect(strandedTurnsSeen).toBeGreaterThan(0); // the stranded path really runs
   });
 
+  it('forfeit swaps a full hand for a fresh one, spends the turn, and is once-per-hand', async () => {
+    const g = useSnakeGame({ players: 3, difficulty: 'easy', seed: 4242, botDelayMs: 0, handSize: 4 });
+    await g.newGame();
+    expect(g.awaitingHuman.value).toBe(true);
+    // a freshly dealt, full hand can be forfeited
+    expect(g.canForfeit.value).toBe(true);
+    expect(g.humanHand.value.length).toBe(4);
+
+    const before = g.humanHand.value.map((c) => `${c.kind}${c.value ?? ''}`);
+    await g.forfeitHand();
+
+    // the hand was swapped for a fresh full one, the turn was spent (so the
+    // mulligan can't be used again on this hand)
+    expect(g.humanHand.value.length).toBe(4);
+    const after = g.humanHand.value.map((c) => `${c.kind}${c.value ?? ''}`);
+    expect(after).not.toEqual(before);
+    expect(g.canForfeit.value).toBe(false);
+  });
+
   it('only offers legal cards to the human while awaiting input', async () => {
     const g = useSnakeGame({ players: 3, difficulty: 'easy', seed: 42, botDelayMs: 0 });
     await g.newGame();

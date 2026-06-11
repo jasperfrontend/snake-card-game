@@ -44,6 +44,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
           <li>You cannot push the snake <b>over its max</b> ({{ perPlayer }} × players — that's <b>{{ maxLength }}</b> at this table).</li>
           <li>You cannot play a <b>trick</b> as your last card — keep a number for the bottom.</li>
           <li>Play your hand down to empty, then draw a fresh 4.</li>
+          <li>Dealt a rotten hand? <b>Forfeit</b> it for a fresh one — but that spends your turn.</li>
         </ul>
       </div>
 

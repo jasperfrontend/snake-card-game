@@ -61,6 +61,7 @@ const beatText: Record<string, string> = {
   coil: 'coil',
   slip: 'slip',
   scramble: 'scramble',
+  forfeit: 'new hand',
 };
 let beatTimer: ReturnType<typeof setTimeout> | undefined;
 watch(
@@ -240,6 +241,17 @@ const turnInfo = computed(() => {
         >
           <span v-if="c === game.strandedDrawn.value" class="drawn-tag">drawn</span>
           <CardFace :card="c" />
+        </button>
+
+        <button
+          v-if="game.canForfeit.value"
+          class="forfeit"
+          title="Bin this whole hand and draw a fresh one — this spends your turn"
+          @click="game.forfeitHand()"
+        >
+          <span class="ff-icon">⟳</span>
+          <span class="ff-text">Forfeit</span>
+          <span class="ff-sub">{{ game.handSize.value }} new</span>
         </button>
       </div>
 
@@ -655,6 +667,48 @@ button.ghost {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
+}
+.forfeit {
+  margin-left: 6px;
+  height: 70px;
+  min-width: 70px;
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: 1.5px dashed var(--gold);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease;
+}
+.forfeit:hover {
+  background: rgba(168, 123, 43, 0.08);
+  transform: translateY(-3px);
+}
+.forfeit .ff-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.forfeit .ff-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.forfeit .ff-sub {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 .hand-card {
   padding: 2px;

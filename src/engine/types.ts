@@ -35,6 +35,7 @@ export type GameEventType =
   | 'coil' // King reversed
   | 'slip' // Jack skipped
   | 'scramble' // Joker rerolled a hand
+  | 'forfeit' // a player binned their own full hand for a fresh one
   | 'refill' // an emptied hand drew back to 4
   | 'reshuffle' // discard recycled into the draw pile
   | 'startLength'; // round seeded its starting length

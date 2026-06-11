@@ -11,6 +11,7 @@
 import { computed, ref, type Ref } from 'vue';
 import { randInt, rngFromState } from '../../engine/rng';
 import {
+  advanceTurn,
   beginTurn,
   drawCard,
   endBite,
@@ -91,7 +92,7 @@ function cardLabel(c: Card): string {
   return `a ${c.kind} (${trickName(c.kind)})`;
 }
 
-const BEAT_TYPES = new Set<GameEvent['type']>(['pin', 'bite', 'shed', 'coil', 'slip', 'scramble']);
+const BEAT_TYPES = new Set<GameEvent['type']>(['pin', 'bite', 'shed', 'coil', 'slip', 'scramble', 'forfeit']);
 
 function mod(i: number, n: number): number {
   return ((i % n) + n) % n;
@@ -142,6 +143,11 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const pinCounts = ref<number[]>(Array.from({ length: n }, () => 0));
   const biteCounts = ref<number[]>(Array.from({ length: n }, () => 0));
 
+  // forfeit: bin a full, fresh hand for a new one — once per hand (resets when
+  // the human's hand refills or a new round deals), so it's a mulligan for a bad
+  // hand, not a bite-escape button.
+  const forfeitUsed = ref(false);
+
   let ticking = false;
   let segId = 0;
   let beatId = 0;
@@ -177,6 +183,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
       log.value.push(describe(e));
       applyToSnake(e);
       if (BEAT_TYPES.has(e.type)) beat.value = { id: ++beatId, type: e.type, by: e.by };
+      // a fresh full hand (refill) re-arms the human's mulligan
+      if (e.type === 'refill' && e.by === humanSeat) forfeitUsed.value = false;
     }
     state.value.events = [];
   }
@@ -230,6 +238,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
         return `${who} slip — the next player is skipped.`;
       case 'scramble':
         return `${who} scrambled — whole hand binned, 4 fresh drawn.`;
+      case 'forfeit':
+        return `${who} forfeit the hand — ${handSize.value} fresh cards.`;
       case 'refill':
         return `${who} empty — draw a fresh 4.`;
       case 'reshuffle':
@@ -445,6 +455,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     beat.value = null;
     pinCounts.value = Array.from({ length: n }, () => 0);
     biteCounts.value = Array.from({ length: n }, () => 0);
+    forfeitUsed.value = false;
     finishStranded();
     clearSave();
     flushEvents();
@@ -461,6 +472,36 @@ export function useSnakeGame(opts: GameOptions = {}) {
     await run();
   }
 
+  /** True only on a full, freshly-dealt hand the human hasn't mulliganed yet. */
+  const canForfeit = computed(
+    () =>
+      awaitingHuman.value &&
+      !forfeitUsed.value &&
+      state.value.players[humanSeat].hand.length === handSize.value,
+  );
+
+  /** Forfeit the whole hand for a fresh one; this spends your turn (a chosen Joker). */
+  async function forfeitHand(): Promise<void> {
+    if (!canForfeit.value) return;
+    const cur = state.value.current;
+    const hand = state.value.players[cur].hand;
+    awaitingHuman.value = false;
+    legalMoves.value = [];
+    forfeitUsed.value = true;
+
+    state.value.discardPile.push(...hand);
+    const fresh: Card[] = [];
+    for (let k = 0; k < handSize.value; k++) {
+      const d = drawCard(state.value, rngBox.rng);
+      if (d) fresh.push(d);
+    }
+    state.value.players[cur].hand = fresh;
+    state.value.events.push({ type: 'forfeit', by: cur });
+    advanceTurn(state.value); // forfeiting costs your play this round
+    flushEvents();
+    await run();
+  }
+
   async function nextRound(): Promise<void> {
     if (state.value.phase !== 'roundEnd') return;
     const dealer = mod(state.value.dealer + 1, n);
@@ -468,6 +509,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     awaitingHuman.value = false;
     legalMoves.value = [];
     beat.value = null;
+    forfeitUsed.value = false;
     finishStranded();
     flushEvents();
     await run();
@@ -508,11 +550,13 @@ export function useSnakeGame(opts: GameOptions = {}) {
     roundResult: computed(() => state.value.roundResult),
     isHumanTurn: computed(() => awaitingHuman.value),
     drawCount: computed(() => state.value.drawPile.length),
+    canForfeit,
 
     playerName,
     humanSeat,
     newGame,
     play,
+    forfeitHand,
     nextRound,
     setSpeed,
     setDifficulty,

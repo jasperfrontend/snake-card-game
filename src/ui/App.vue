@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useSnakeGame, type Beat } from './composables/useSnakeGame';
+import { hasSeenRules, markRulesSeen } from './persistence';
 import CardFace from './components/CardFace.vue';
 import SnakeRow from './components/SnakeRow.vue';
 import RulesModal from './components/RulesModal.vue';
@@ -14,7 +15,14 @@ const showSettings = ref(false);
 onMounted(() => {
   if (game.loadSaved()) game.resume();
   else game.newGame();
+  // first-time visitors get the rules shoved at them; we remember after that
+  if (!hasSeenRules()) showRules.value = true;
 });
+
+function closeRules() {
+  showRules.value = false;
+  markRulesSeen();
+}
 
 function start() {
   selectedAce.value = null;
@@ -149,7 +157,7 @@ const turnInfo = computed(() => {
         v-if="showRules"
         :max-length="game.maxLength.value"
         :players="game.state.value.players.length"
-        @close="showRules = false"
+        @close="closeRules"
       />
     </Transition>
 

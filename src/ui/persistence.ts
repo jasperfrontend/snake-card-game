@@ -10,6 +10,8 @@ const VERSION = 1;
 const K_SETTINGS = 'snake:settings:v1';
 const K_RECORD = 'snake:record:v1';
 const K_SAVE = 'snake:save:v1';
+const K_SEEN_RULES = 'snake:seenRules:v1';
+const C_SEEN_RULES = 'snake_seen_rules';
 
 export interface Settings {
   difficulty: Difficulty;
@@ -114,4 +116,42 @@ export function saveGame(data: SaveData): void {
 }
 export function clearSave(): void {
   remove(K_SAVE);
+}
+
+// first-visit rules ----------------------------------------------------------
+// Stored in BOTH localStorage and a cookie so clearing one still suppresses the
+// auto-open. Either present => the visitor has seen the rules.
+
+export function hasSeenRules(): boolean {
+  const s = store();
+  if (s) {
+    try {
+      if (s.getItem(K_SEEN_RULES)) return true;
+    } catch {
+      /* ignore */
+    }
+  }
+  if (typeof document !== 'undefined') {
+    if (document.cookie.split('; ').some((c) => c.startsWith(`${C_SEEN_RULES}=`))) return true;
+  }
+  return false;
+}
+
+export function markRulesSeen(): void {
+  const s = store();
+  if (s) {
+    try {
+      s.setItem(K_SEEN_RULES, '1');
+    } catch {
+      /* ignore */
+    }
+  }
+  if (typeof document !== 'undefined') {
+    try {
+      const oneYear = 60 * 60 * 24 * 365;
+      document.cookie = `${C_SEEN_RULES}=1; path=/; max-age=${oneYear}; SameSite=Lax`;
+    } catch {
+      /* ignore */
+    }
+  }
 }

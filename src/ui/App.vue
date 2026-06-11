@@ -6,7 +6,7 @@ import SnakeRow from './components/SnakeRow.vue';
 import RulesModal from './components/RulesModal.vue';
 import type { Difficulty } from '../engine/types';
 
-const game = useSnakeGame({ players: 3, interactiveStranded: true });
+const game = useSnakeGame({ players: 3, interactiveStranded: true, maxPerPlayer: 23 });
 const difficulty = ref<Difficulty>(game.difficulty.value);
 const speed = ref(game.speed.value);
 const selectedAce = ref<number | null>(null);
@@ -163,7 +163,12 @@ const turnInfo = computed(() => {
     </header>
 
     <Transition name="fade">
-      <RulesModal v-if="showRules" @close="showRules = false" />
+      <RulesModal
+        v-if="showRules"
+        :max-length="game.maxLength.value"
+        :players="game.state.value.players.length"
+        @close="showRules = false"
+      />
     </Transition>
 
     <Transition name="turn">

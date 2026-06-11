@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
+const props = defineProps<{ maxLength: number; players: number }>();
 const emit = defineEmits<{ close: [] }>();
 const closeBtn = ref<HTMLButtonElement | null>(null);
+const perPlayer = computed(() => Math.round(props.maxLength / props.players));
 
 const TRICKS = [
   { rank: 'K', name: 'Coil', does: 'Reverse the direction of play.' },
@@ -39,7 +41,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
         <h3>Your turn</h3>
         <ul>
           <li>Play exactly <b>one</b> card, then say the snake's new length out loud.</li>
-          <li>You cannot push the snake <b>over its max</b> (15 × players — that's <b>45</b> at this table).</li>
+          <li>You cannot push the snake <b>over its max</b> ({{ perPlayer }} × players — that's <b>{{ maxLength }}</b> at this table).</li>
           <li>You cannot play a <b>trick</b> as your last card — keep a number for the bottom.</li>
           <li>Play your hand down to empty, then draw a fresh 4.</li>
         </ul>

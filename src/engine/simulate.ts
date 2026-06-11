@@ -28,7 +28,13 @@ export interface BatchStats {
   loserSeat: number[]; // count per seat
 }
 
-export function runBatch(nPlayers: number, nGames: number, seed: number, policy: ChoosePolicy = smartPolicy): BatchStats {
+export function runBatch(
+  nPlayers: number,
+  nGames: number,
+  seed: number,
+  policy: ChoosePolicy = smartPolicy,
+  maxPerPlayer = 15,
+): BatchStats {
   const rng = mulberry32(seed);
   const stats: BatchStats = {
     players: nPlayers,
@@ -43,7 +49,7 @@ export function runBatch(nPlayers: number, nGames: number, seed: number, policy:
   };
 
   for (let g = 0; g < nGames; g++) {
-    const { loser, rounds, roundResults } = playGame(nPlayers, policy, rng);
+    const { loser, rounds, roundResults } = playGame(nPlayers, policy, rng, maxPerPlayer);
     stats.roundsPerGame.push(rounds);
     stats.loserSeat[loser]++;
     for (const r of roundResults) {

@@ -14,10 +14,15 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-Feed the snake without overshooting its max length (15 × players). Land exactly on
-the max to **pin** it (you score 0, everyone else +5); get cornered with no legal
-card and you are **bitten** (+10). Points are bad — first to 100 loses, everyone
-else wins. The wild **Ace** (Strike) is how you thread the needle for a pin.
+Feed the snake without overshooting its max length. Land exactly on the max to
+**pin** it (you score 0, everyone else +5); get cornered with no legal card and you
+are **bitten** (+10). Points are bad — first to 100 loses, everyone else wins. The
+wild **Ace** (Strike) is how you thread the needle for a pin.
+
+> The rulebook and the Python oracle use a max of **15 × players**; the playable
+> game runs a roomier **23 × players** (69 at a 3-handed table) for more
+> breathing room. It's the `maxPerPlayer` option on `useSnakeGame`; the engine
+> default stays 15 so the statistical tests keep matching the oracle.
 
 ## Develop
 

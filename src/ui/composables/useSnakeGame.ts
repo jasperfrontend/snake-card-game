@@ -63,6 +63,7 @@ export interface GameOptions {
   players?: number; // total seats, default 3
   difficulty?: Difficulty; // bot strength, default 'medium'
   speed?: GameSpeed; // pacing, default from settings ('normal')
+  maxPerPlayer?: number; // snake max = this × players (rulebook 15; game uses 23)
   humanSeat?: number; // which seat the human plays, default 0
   seed?: number; // fix for deterministic play/tests; otherwise random
   /** Shorthand: sets both think and settle to this. Pass 0 for instant (tests). */
@@ -101,6 +102,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
   // Deliberate pacing: a bot turn takes thinkMs + settleMs (~3.1s) so the table
   // is readable. botDelayMs is a shorthand (0 = instant, used by the tests).
   const interactiveStranded = opts.interactiveStranded ?? false;
+  const maxPerPlayer = opts.maxPerPlayer ?? 15;
   const settings0 = loadSettings();
   const difficulty = ref<Difficulty>(opts.difficulty ?? settings0.difficulty);
   const speed = ref<GameSpeed>(opts.speed ?? settings0.speed);
@@ -115,7 +117,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
 
   let rngBox = rngFromState({ seed: opts.seed ?? 1, calls: 0 });
 
-  const state = ref<GameState>(startRound(initialPlayers(), 0, rngBox.rng)) as Ref<GameState>;
+  const state = ref<GameState>(startRound(initialPlayers(), 0, rngBox.rng, maxPerPlayer)) as Ref<GameState>;
   const awaitingHuman = ref(false);
   const thinkingSeat = ref<number | null>(null);
   const gameOver = ref(false);
@@ -414,7 +416,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     persistSettings();
     rngBox = rngFromState({ seed: opts.seed ?? Math.floor(Math.random() * 0x7fffffff), calls: 0 });
     const dealer = randInt(rngBox.rng, n);
-    state.value = startRound(initialPlayers(), dealer, rngBox.rng);
+    state.value = startRound(initialPlayers(), dealer, rngBox.rng, maxPerPlayer);
     awaitingHuman.value = false;
     thinkingSeat.value = null;
     gameOver.value = false;
@@ -445,7 +447,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
   async function nextRound(): Promise<void> {
     if (state.value.phase !== 'roundEnd') return;
     const dealer = mod(state.value.dealer + 1, n);
-    state.value = startRound(state.value.players, dealer, rngBox.rng);
+    state.value = startRound(state.value.players, dealer, rngBox.rng, maxPerPlayer);
     awaitingHuman.value = false;
     legalMoves.value = [];
     beat.value = null;

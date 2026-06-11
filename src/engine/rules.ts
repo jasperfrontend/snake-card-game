@@ -294,8 +294,17 @@ export function stepTurn(state: GameState, choose: ChoosePolicy, rng: Rng): Game
 
 // ---------------------------------------------------------------- round runner
 
+/** The rulebook's default snake-length-per-player. The Python oracle uses this;
+ *  the playable game may pass a roomier value. */
+export const DEFAULT_MAX_PER_PLAYER = 15;
+
 /** Build a fresh round: deal 4 each, seed the starting length from a food flip. */
-export function startRound(players: Player[], dealer: number, rng: Rng): GameState {
+export function startRound(
+  players: Player[],
+  dealer: number,
+  rng: Rng,
+  maxPerPlayer = DEFAULT_MAX_PER_PLAYER,
+): GameState {
   const n = players.length;
   const deck = shuffle(buildDeck(), rng);
   const dealt: Player[] = players.map((p) => ({ ...p, hand: [] }));
@@ -306,7 +315,7 @@ export function startRound(players: Player[], dealer: number, rng: Rng): GameSta
   const state: GameState = {
     players: dealt,
     length: 0,
-    maxLength: 15 * n,
+    maxLength: maxPerPlayer * n,
     direction: 1,
     current: mod(dealer + 1, n),
     drawPile: deck,
@@ -362,14 +371,19 @@ export function pickLoser(scores: number[], rng: Rng): number {
 }
 
 /** Play a full game to a loss (first to 100 points). */
-export function playGame(n: number, choose: ChoosePolicy, rng: Rng): GameOutcome {
+export function playGame(
+  n: number,
+  choose: ChoosePolicy,
+  rng: Rng,
+  maxPerPlayer = DEFAULT_MAX_PER_PLAYER,
+): GameOutcome {
   let players: Player[] = Array.from({ length: n }, () => ({ hand: [], score: 0, isBot: true }));
   let dealer = randInt(rng, n);
   let rounds = 0;
   const roundResults: RoundResult[] = [];
 
   while (Math.max(...players.map((p) => p.score)) < 100 && rounds < 1000) {
-    const state = startRound(players, dealer, rng);
+    const state = startRound(players, dealer, rng, maxPerPlayer);
     const final = playRound(state, choose, rng);
     players = final.players;
     if (final.roundResult) roundResults.push(final.roundResult);

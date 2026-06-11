@@ -10,9 +10,19 @@
 
 import { computed, ref, type Ref } from 'vue';
 import { randInt, rngFromState } from '../../engine/rng';
-import { beginTurn, executeMove, pickLoser, startRound, type ChoosePolicy, type LegalMove } from '../../engine/rules';
+import {
+  advanceTurn,
+  beginTurn,
+  drawCard,
+  endBite,
+  executeMove,
+  pickLoser,
+  startRound,
+  type ChoosePolicy,
+  type LegalMove,
+} from '../../engine/rules';
 import { botChooseMove } from '../../bots/policy';
-import type { Difficulty, GameEvent, GameState, Kind, Move, Player } from '../../engine/types';
+import type { Card, Difficulty, GameEvent, GameState, Kind, Move, Player } from '../../engine/types';
 import {
   clearSave,
   loadRecord,
@@ -49,6 +59,24 @@ export interface GameOptions {
   botDelayMs?: number;
   thinkMs?: number; // a bot "thinks" before revealing its move (default 2300)
   settleMs?: number; // pause after a move so the table can read it (default 800)
+  /**
+   * When the human's last card is a trick, drive the forced draw-and-play as a
+   * paced, narrated sequence (and let the human choose a drawn Ace's value)
+   * instead of the engine resolving it instantly. The UI opts in; headless
+   * callers (tests) leave it off so beginTurn's bundled resolution is used.
+   */
+  interactiveStranded?: boolean;
+}
+
+const TRICK_NAMES: Record<string, string> = { K: 'Coil', J: 'Slip', Q: 'Shed', A: 'Strike', JOKER: 'Scramble' };
+function trickName(k: Kind): string {
+  return TRICK_NAMES[k] ?? k;
+}
+function cardLabel(c: Card): string {
+  if (c.kind === 'food') return `a ${c.value}`;
+  if (c.kind === 'JOKER') return 'a Joker';
+  if (c.kind === 'A') return 'an Ace';
+  return `a ${c.kind} (${trickName(c.kind)})`;
 }
 
 const BEAT_TYPES = new Set<GameEvent['type']>(['pin', 'bite', 'shed', 'coil', 'slip', 'scramble']);
@@ -64,6 +92,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
   // is readable. botDelayMs is a shorthand (0 = instant, used by the tests).
   const thinkMs = opts.thinkMs ?? opts.botDelayMs ?? 2300;
   const settleMs = opts.settleMs ?? opts.botDelayMs ?? 800;
+  const interactiveStranded = opts.interactiveStranded ?? false;
   const difficulty = ref<Difficulty>(opts.difficulty ?? loadSettings().difficulty);
 
   let rngBox = rngFromState({ seed: opts.seed ?? 1, calls: 0 });
@@ -79,6 +108,11 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const snake = ref<SnakeSegment[]>([]);
   const beat = ref<Beat | null>(null);
   const record = ref<PlayRecord>(loadRecord());
+
+  // the stranded-trick reveal (human only): a narrated draw-and-play
+  const strandedNote = ref<string | null>(null);
+  const strandedDrawn = ref<Card | null>(null);
+  const awaitingStrandedAce = ref(false);
 
   let ticking = false;
   let segId = 0;
@@ -211,6 +245,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     thinkingSeat.value = null;
     gameOver.value = false;
     loser.value = null;
+    finishStranded();
     segId = saved.snake.reduce((m, s) => Math.max(m, s.id), 0);
     return true;
   }
@@ -230,6 +265,12 @@ export function useSnakeGame(opts: GameOptions = {}) {
         const cur = state.value.current;
 
         if (cur === humanSeat) {
+          const hand = state.value.players[cur].hand;
+          if (interactiveStranded && hand.length === 1 && hand[0].kind !== 'food') {
+            await resolveHumanStranded();
+            if (awaitingStrandedAce.value) return; // wait for playStrandedAce()
+            continue;
+          }
           const prep = beginTurn(state.value, rngBox.rng);
           flushEvents();
           if (prep.status === 'awaiting') {
@@ -261,6 +302,86 @@ export function useSnakeGame(opts: GameOptions = {}) {
     const mv = botChoose(state.value, rngBox.rng);
     if (mv === null) return; // beginTurn already covers the no-move bite
     executeMove(state.value, mv.cardIndex, mv.aceValue, rngBox.rng);
+  }
+
+  // -------------------------------------------------- stranded trick (human only)
+  // Mirrors beginTurn's stranded branch step-by-step, but paced and narrated so
+  // the forced draw-and-play is legible — and the human picks a drawn Ace's value.
+
+  function finishStranded(): void {
+    strandedNote.value = null;
+    strandedDrawn.value = null;
+    awaitingStrandedAce.value = false;
+  }
+
+  // stranded pacing collapses to instant when delays are off (headless/tests)
+  const strandedPace = (ms: number) => (settleMs <= 0 ? 0 : ms);
+
+  async function resolveHumanStranded(): Promise<void> {
+    const cur = state.value.current;
+    const hand = state.value.players[cur].hand;
+    const trick = hand[0];
+    state.value.roundMeta.plays++; // count the turn, exactly as beginTurn would
+
+    strandedNote.value = `Only a ${trickName(trick.kind)} left — you must draw a card and play it.`;
+    await delay(strandedPace(900));
+
+    const drawn = drawCard(state.value, rngBox.rng);
+    flushEvents(); // surface a reshuffle, if any
+    if (drawn === null) {
+      endBite(state.value, cur); // truly out of cards (degenerate)
+      flushEvents();
+      finishStranded();
+      return;
+    }
+    hand.push(drawn);
+    strandedDrawn.value = drawn;
+    strandedNote.value = `You drew ${cardLabel(drawn)}.`;
+    log.value.push(`Down to a ${trickName(trick.kind)} — drew ${cardLabel(drawn)}.`);
+    await delay(strandedPace(1100));
+
+    const length = state.value.length;
+    const mx = state.value.maxLength;
+
+    if (drawn.kind === 'food') {
+      if (length + (drawn.value as number) <= mx) {
+        strandedNote.value = `Playing the ${drawn.value}.`;
+        await delay(strandedPace(550));
+        executeMove(state.value, 1, undefined, rngBox.rng);
+        flushEvents();
+      } else {
+        strandedNote.value = `The ${drawn.value} would overshoot — you keep both and pass.`;
+        log.value.push(`The ${drawn.value} is too big — kept both and passed.`);
+        advanceTurn(state.value);
+        await delay(strandedPace(1100));
+      }
+      finishStranded();
+      return;
+    }
+
+    if (drawn.kind === 'A') {
+      // give the human the choice the engine would otherwise make for them
+      strandedNote.value = `You drew a Strike — choose its value.`;
+      awaitingStrandedAce.value = true;
+      return; // run() returns; playStrandedAce() finishes it
+    }
+
+    // K / Q / J / Joker — always playable at hand size 2, so play it
+    strandedNote.value = `Playing the ${trickName(drawn.kind)}.`;
+    await delay(strandedPace(550));
+    executeMove(state.value, 1, undefined, rngBox.rng);
+    flushEvents();
+    finishStranded();
+  }
+
+  async function playStrandedAce(value: number): Promise<void> {
+    if (!awaitingStrandedAce.value) return;
+    awaitingStrandedAce.value = false;
+    strandedNote.value = null;
+    executeMove(state.value, 1, value, rngBox.rng); // the drawn Ace sits at index 1
+    flushEvents();
+    finishStranded();
+    await run();
   }
 
   function onRoundEnd(): void {
@@ -297,6 +418,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     legalMoves.value = [];
     snake.value = [];
     beat.value = null;
+    finishStranded();
     clearSave();
     flushEvents();
     await run();
@@ -318,6 +440,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     awaitingHuman.value = false;
     legalMoves.value = [];
     beat.value = null;
+    finishStranded();
     flushEvents();
     await run();
   }
@@ -334,6 +457,9 @@ export function useSnakeGame(opts: GameOptions = {}) {
     snake,
     beat,
     record,
+    strandedNote,
+    strandedDrawn,
+    awaitingStrandedAce,
 
     length: computed(() => state.value.length),
     maxLength: computed(() => state.value.maxLength),
@@ -356,6 +482,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     humanSeat,
     newGame,
     play,
+    playStrandedAce,
     nextRound,
     loadSaved,
     resume,

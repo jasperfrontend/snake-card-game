@@ -44,6 +44,33 @@ describe('useSnakeGame — full game', () => {
     expect(a.loser.value).toBe(b.loser.value);
   });
 
+  it('drives the interactive stranded-trick path to completion (incl. Ace choice)', async () => {
+    // interactiveStranded routes the human's lone-trick turn through the paced,
+    // choosable flow; the driver must handle the extra Ace-value pause.
+    for (const seed of [3, 17, 88, 271, 909]) {
+      const g = useSnakeGame({ players: 3, difficulty: 'easy', seed, botDelayMs: 0, interactiveStranded: true });
+      await g.newGame();
+      let strandedAcePrompts = 0;
+      let guard = 0;
+      while (!g.gameOver.value && guard++ < 30000) {
+        if (g.awaitingStrandedAce.value) {
+          strandedAcePrompts++;
+          await g.playStrandedAce(0); // feint — always legal
+        } else if (g.awaitingHuman.value) {
+          await g.play(smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value)!);
+        } else if (g.state.value.phase === 'roundEnd') {
+          await g.nextRound();
+        } else break;
+      }
+      expect(g.gameOver.value).toBe(true);
+      expect(Math.max(...g.scores.value)).toBeGreaterThanOrEqual(100);
+      // when an Ace pause does occur, the prompt state must always be cleared after
+      expect(g.awaitingStrandedAce.value).toBe(false);
+      expect(g.strandedNote.value).toBeNull();
+      void strandedAcePrompts;
+    }
+  });
+
   it('only offers legal cards to the human while awaiting input', async () => {
     const g = useSnakeGame({ players: 3, difficulty: 'easy', seed: 42, botDelayMs: 0 });
     await g.newGame();

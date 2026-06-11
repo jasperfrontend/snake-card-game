@@ -6,7 +6,7 @@ import SnakeRow from './components/SnakeRow.vue';
 import RulesModal from './components/RulesModal.vue';
 import type { Difficulty } from '../engine/types';
 
-const game = useSnakeGame({ players: 3 });
+const game = useSnakeGame({ players: 3, interactiveStranded: true });
 const difficulty = ref<Difficulty>(game.difficulty.value);
 const selectedAce = ref<number | null>(null);
 const showRules = ref(false);
@@ -183,6 +183,21 @@ const turnInfo = computed(() => {
       </div>
     </section>
 
+    <Transition name="pop">
+      <section v-if="game.strandedNote.value || game.awaitingStrandedAce.value" class="stranded">
+        <p class="eyebrow">Stuck with a trick</p>
+        <p class="s-note">{{ game.strandedNote.value }}</p>
+        <div v-if="game.strandedDrawn.value" class="s-card">
+          <CardFace :card="game.strandedDrawn.value" />
+        </div>
+        <div v-if="game.awaitingStrandedAce.value" class="ace-picker centered">
+          <button v-for="v in game.aceValues.value" :key="v" class="primary" @click="game.playStrandedAce(v)">
+            {{ v === 0 ? 'feint · 0' : v }}
+          </button>
+        </div>
+      </section>
+    </Transition>
+
     <section class="hand-wrap">
       <p class="eyebrow">Your hand</p>
       <div class="hand">
@@ -209,7 +224,7 @@ const turnInfo = computed(() => {
       </div>
 
       <p
-        v-else-if="!game.awaitingHuman.value && !game.gameOver.value && !game.roundResult.value"
+        v-else-if="!game.awaitingHuman.value && !game.gameOver.value && !game.roundResult.value && !game.strandedNote.value"
         class="waiting"
       >
         <span v-if="game.thinkingSeat.value !== null">{{ game.playerName(game.thinkingSeat.value) }} is thinking…</span>
@@ -549,6 +564,39 @@ button.ghost {
   align-items: center;
   font-family: var(--mono);
   font-size: 12px;
+}
+.ace-picker.centered {
+  justify-content: center;
+  margin-top: 12px;
+}
+
+/* ---- stranded trick: a clear, paced moment ---- */
+.stranded {
+  margin-top: 24px;
+  padding: 18px 18px 20px;
+  border: 1.5px solid var(--gold-bright);
+  border-radius: 12px;
+  background: linear-gradient(160deg, #fbf3df, #f3e7c9);
+  text-align: center;
+  box-shadow: 0 14px 30px -18px rgba(168, 123, 43, 0.7);
+}
+.stranded .s-note {
+  font-family: var(--body);
+  font-size: 18px;
+  color: var(--ink);
+  margin: 2px 0 0;
+}
+.stranded .s-card {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+  animation: dealin 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes dealin {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) rotate(-4deg) scale(0.85);
+  }
 }
 .waiting {
   font-family: var(--mono);

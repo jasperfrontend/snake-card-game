@@ -348,7 +348,7 @@ const turnInfo = computed(() => {
   height: 18px;
 }
 .bar h1 {
-  font-family: var(--display);
+  font-family: var(--display), serif;
   font-weight: 900;
   letter-spacing: 0.12em;
   padding-left: 0.12em;
@@ -366,7 +366,7 @@ const turnInfo = computed(() => {
   align-items: center;
   flex-wrap: wrap;
   justify-content: flex-end;
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 12px;
 }
 .record {
@@ -387,7 +387,7 @@ const turnInfo = computed(() => {
 }
 button,
 select {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 12px;
   padding: 5px 8px;
   border: 1px solid var(--gold);
@@ -432,7 +432,7 @@ button.ghost {
   gap: 10px;
   padding: 8px 18px;
   border-radius: 999px;
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 14px;
   letter-spacing: 0.04em;
   background: var(--cardback);
@@ -531,7 +531,7 @@ button.ghost {
   position: absolute;
   top: -11px;
   left: 12px;
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -551,12 +551,12 @@ button.ghost {
   align-items: baseline;
 }
 .seat-head .score {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-weight: 700;
   color: var(--red);
 }
 .seat-sub {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 11px;
   color: var(--ink-soft);
   display: flex;
@@ -628,7 +628,7 @@ button.ghost {
   transform: translate(-50%, -50%);
   background: var(--bone);
   padding: 0 10px;
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 10px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -656,7 +656,7 @@ button.ghost {
   margin-top: 28px;
 }
 .eyebrow {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   text-transform: uppercase;
   letter-spacing: 0.22em;
   font-size: 11px;
@@ -697,14 +697,14 @@ button.ghost {
   line-height: 1;
 }
 .forfeit .ff-text {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 .forfeit .ff-sub {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 9px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -736,7 +736,7 @@ button.ghost {
   gap: 6px;
   flex-wrap: wrap;
   align-items: center;
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 12px;
 }
 /* ---- stranded trick: a clear, paced moment, then the normal hand ---- */
@@ -750,7 +750,7 @@ button.ghost {
   box-shadow: 0 14px 30px -18px rgba(168, 123, 43, 0.7);
 }
 .stranded .s-note {
-  font-family: var(--body);
+  font-family: var(--body), serif;
   font-size: 17px;
   color: var(--ink);
   margin: 2px 0 0;
@@ -769,7 +769,7 @@ button.ghost {
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -787,7 +787,7 @@ button.ghost {
   }
 }
 .waiting {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 12px;
   color: var(--ink-soft);
   margin-top: 14px;
@@ -806,7 +806,7 @@ button.ghost {
   gap: 12px;
   flex-wrap: wrap;
   border: 1px solid var(--gold);
-  font-family: var(--body);
+  font-family: var(--body), serif;
   font-size: 17px;
 }
 .banner.pin {
@@ -826,7 +826,7 @@ button.ghost {
   gap: 4px;
 }
 .over-sub {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 12px;
   letter-spacing: 0.04em;
   color: var(--gold-bright);
@@ -872,21 +872,21 @@ button.ghost {
   box-shadow: inset 0 0 0 1.5px var(--gold-bright);
 }
 .tally-cell .t-name {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--ink-soft);
 }
 .tally-cell .t-pins {
-  font-family: var(--display);
+  font-family: var(--display), serif;
   font-weight: 900;
   font-size: 34px;
   line-height: 1.05;
   color: var(--gold);
 }
 .tally-cell .t-sub {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 10px;
   letter-spacing: 0.06em;
   color: var(--ink-soft);
@@ -896,7 +896,7 @@ button.ghost {
   margin-top: 30px;
 }
 .log summary {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   font-size: 11px;
@@ -907,7 +907,7 @@ button.ghost {
   list-style: none;
   padding: 0;
   margin: 10px 0 0;
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 12px;
   color: var(--ink-soft);
 }
@@ -930,14 +930,14 @@ button.ghost {
   text-align: center;
 }
 .beat-big .word {
-  font-family: var(--display);
+  font-family: var(--display), serif;
   font-weight: 900;
   font-size: clamp(64px, 18vw, 150px);
   letter-spacing: 0.06em;
   line-height: 1;
 }
 .beat-big .sub {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   text-transform: uppercase;
   letter-spacing: 0.24em;
   font-size: 12px;
@@ -963,7 +963,7 @@ button.ghost {
   transform: translateX(-50%);
   z-index: 50;
   pointer-events: none;
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;

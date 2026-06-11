@@ -154,7 +154,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   cursor: pointer;
 }
 .eyebrow {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   text-transform: uppercase;
   letter-spacing: 0.3em;
   font-size: 11px;
@@ -162,7 +162,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   margin: 0 0 6px;
 }
 h2 {
-  font-family: var(--display);
+  font-family: var(--display), serif;
   font-weight: 600;
   font-size: clamp(24px, 5vw, 30px);
   margin: 0 0 20px;
@@ -179,13 +179,13 @@ h2 {
   margin-bottom: 7px;
 }
 .r-label {
-  font-family: var(--display);
+  font-family: var(--display), serif;
   font-weight: 600;
   font-size: 17px;
   color: var(--ink);
 }
 .r-tag {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -229,12 +229,12 @@ h2 {
   color: var(--bone);
 }
 .s-main {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 13px;
   font-weight: 700;
 }
 .s-hint {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 9px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -253,7 +253,7 @@ h2 {
 }
 button.ghost,
 button.primary {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 13px;
   padding: 9px 16px;
   border: 1px solid var(--gold);

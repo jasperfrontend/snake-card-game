@@ -52,7 +52,7 @@ const room = computed(() => props.maxLength - props.length);
   text-align: center;
 }
 .readout {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   display: flex;
   gap: 8px;
   align-items: baseline;
@@ -118,7 +118,7 @@ const room = computed(() => props.maxLength - props.length);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--display);
+  font-family: var(--display), serif;
   font-weight: 600;
   font-size: 16px;
   border: 1px solid var(--gold);

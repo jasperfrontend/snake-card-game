@@ -31,7 +31,7 @@ body {
   margin: 0;
   background: var(--bone);
   color: var(--ink);
-  font-family: var(--body);
+  font-family: var(--body), serif;
   font-size: 17px;
   line-height: 1.6;
   background-image: radial-gradient(rgba(33, 28, 22, 0.025) 1px, transparent 1px);

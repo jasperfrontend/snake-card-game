@@ -116,7 +116,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   cursor: pointer;
 }
 .eyebrow {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   text-transform: uppercase;
   letter-spacing: 0.3em;
   font-size: 11px;
@@ -124,7 +124,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   margin: 0 0 6px;
 }
 h2 {
-  font-family: var(--display);
+  font-family: var(--display), serif;
   font-weight: 600;
   font-size: clamp(26px, 5vw, 34px);
   margin: 0 0 12px;
@@ -145,7 +145,7 @@ h2 {
   margin-bottom: 22px;
 }
 h3 {
-  font-family: var(--display);
+  font-family: var(--display), serif;
   font-weight: 600;
   font-size: 19px;
   margin: 0 0 8px;
@@ -164,7 +164,7 @@ li b {
   font-weight: 600;
 }
 .note {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 12px;
   color: var(--ink-soft);
   margin: 0 0 12px;
@@ -187,14 +187,14 @@ li b {
   text-align: center;
 }
 .tcard .rank {
-  font-family: var(--display);
+  font-family: var(--display), serif;
   font-weight: 900;
   font-size: 28px;
   line-height: 1;
   color: var(--gold);
 }
 .tcard .name {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-size: 9px;
@@ -229,7 +229,7 @@ li b {
   background: linear-gradient(160deg, var(--bone), #f0e6d2);
 }
 .end h4 {
-  font-family: var(--display);
+  font-family: var(--display), serif;
   font-weight: 600;
   font-size: 18px;
   margin: 0 0 4px;
@@ -238,7 +238,7 @@ li b {
   gap: 8px;
 }
 .end h4 span {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -249,7 +249,7 @@ li b {
   margin: 0;
 }
 button.primary {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   font-size: 13px;
   padding: 9px 16px;
   border: 1px solid var(--gold);

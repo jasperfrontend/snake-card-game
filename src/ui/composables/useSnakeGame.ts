@@ -132,6 +132,10 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const strandedNote = ref<string | null>(null);
   const strandedDrawn = ref<Card | null>(null);
 
+  // per-player tally for the current game (the pin/bite race)
+  const pinCounts = ref<number[]>(Array.from({ length: n }, () => 0));
+  const biteCounts = ref<number[]>(Array.from({ length: n }, () => 0));
+
   let ticking = false;
   let segId = 0;
   let beatId = 0;
@@ -244,6 +248,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
       legalMoves: legalMoves.value,
       snake: snake.value,
       log: log.value,
+      pins: pinCounts.value,
+      bites: biteCounts.value,
     });
   }
 
@@ -263,6 +269,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
     thinkingSeat.value = null;
     gameOver.value = false;
     loser.value = null;
+    pinCounts.value = saved.pins ?? Array.from({ length: n }, () => 0);
+    biteCounts.value = saved.bites ?? Array.from({ length: n }, () => 0);
     finishStranded();
     segId = saved.snake.reduce((m, s) => Math.max(m, s.id), 0);
     return true;
@@ -368,6 +376,13 @@ export function useSnakeGame(opts: GameOptions = {}) {
   }
 
   function onRoundEnd(): void {
+    // tally the round that just finished
+    const rr = state.value.roundResult;
+    if (rr) {
+      if (rr.ending === 'pin') pinCounts.value[rr.who]++;
+      else biteCounts.value[rr.who]++;
+    }
+
     const scores = state.value.players.map((pl) => pl.score);
     if (Math.max(...scores) >= 100) {
       const who = pickLoser(scores, rngBox.rng);
@@ -409,6 +424,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
     legalMoves.value = [];
     snake.value = [];
     beat.value = null;
+    pinCounts.value = Array.from({ length: n }, () => 0);
+    biteCounts.value = Array.from({ length: n }, () => 0);
     finishStranded();
     clearSave();
     flushEvents();
@@ -452,6 +469,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
     speed,
     strandedNote,
     strandedDrawn,
+    pinCounts,
+    biteCounts,
 
     length: computed(() => state.value.length),
     maxLength: computed(() => state.value.maxLength),

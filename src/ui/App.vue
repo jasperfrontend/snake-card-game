@@ -259,6 +259,22 @@ const turnInfo = computed(() => {
       <button class="primary" @click="start">Play again</button>
     </section>
 
+    <section class="tally" aria-label="Pins this game">
+      <p class="eyebrow">Pins this game · the race you actually want to win</p>
+      <div class="tally-grid">
+        <div
+          v-for="(pins, i) in game.pinCounts.value"
+          :key="i"
+          class="tally-cell"
+          :class="{ you: i === humanSeat, lead: pins === Math.max(...game.pinCounts.value) && pins > 0 }"
+        >
+          <span class="t-name">{{ game.playerName(i) }}</span>
+          <span class="t-pins">{{ pins }}</span>
+          <span class="t-sub">pin{{ pins === 1 ? '' : 's' }}<template v-if="game.biteCounts.value[i]"> · {{ game.biteCounts.value[i] }} bit</template></span>
+        </div>
+      </div>
+    </section>
+
     <details class="log">
       <summary>Table talk</summary>
       <ul>
@@ -664,6 +680,52 @@ button.ghost {
   background: var(--gold-bright);
   border-color: var(--gold-bright);
   color: var(--cardback);
+}
+
+.tally {
+  margin-top: 28px;
+}
+.tally-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+.tally-cell {
+  border: 1px solid rgba(168, 123, 43, 0.4);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--bone);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.tally-cell.you {
+  background: linear-gradient(160deg, var(--bone), #efead7);
+  border-color: var(--gold);
+}
+.tally-cell.lead {
+  box-shadow: inset 0 0 0 1.5px var(--gold-bright);
+}
+.tally-cell .t-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+.tally-cell .t-pins {
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 34px;
+  line-height: 1.05;
+  color: var(--gold);
+}
+.tally-cell .t-sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
 }
 
 .log {

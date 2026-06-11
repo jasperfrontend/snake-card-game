@@ -95,6 +95,28 @@ describe('persistence', () => {
     expect(Math.max(...g2.scores.value)).toBeGreaterThanOrEqual(100);
   });
 
+  it('tracks the per-player pin/bite tally and restores it on refresh', async () => {
+    const g = useSnakeGame({ players: 3, seed: 31, botDelayMs: 0, difficulty: 'easy' });
+    await g.newGame();
+    let guard = 0;
+    while (!g.gameOver.value && guard++ < 4000) {
+      if (g.awaitingHuman.value) {
+        await g.play(smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value)!);
+      } else if (g.state.value.phase === 'roundEnd') {
+        await g.nextRound();
+      } else break;
+      if (g.pinCounts.value.reduce((a, b) => a + b, 0) >= 5) break; // a few rounds in
+    }
+    const totalPins = g.pinCounts.value.reduce((a, b) => a + b, 0);
+    expect(totalPins).toBeGreaterThan(0);
+
+    // a fresh instance (a refresh) restores the running tally exactly
+    const g2 = useSnakeGame({ players: 3, seed: 1, botDelayMs: 0 });
+    expect(g2.loadSaved()).toBe(true);
+    expect(g2.pinCounts.value).toEqual(g.pinCounts.value);
+    expect(g2.biteCounts.value).toEqual(g.biteCounts.value);
+  });
+
   it('updates the win/loss record and clears the save on game over', async () => {
     const g = useSnakeGame({ players: 3, seed: 31, botDelayMs: 0, difficulty: 'easy' });
     await g.newGame();

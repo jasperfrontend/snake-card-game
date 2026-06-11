@@ -29,6 +29,8 @@ export interface SavedGame {
   legalMoves: LegalMove[];
   snake: SnakeSegment[];
   log: string[];
+  pins: number[];
+  bites: number[];
 }
 
 export type SaveData = Omit<SavedGame, 'version'>;

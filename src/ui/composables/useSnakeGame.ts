@@ -50,15 +50,25 @@ export interface Beat {
   by: number;
 }
 
+/** How long the fabricated bot pacing runs. A user-facing preference. */
+export type GameSpeed = 'slow' | 'normal' | 'fast';
+
+const SPEED_PRESETS: Record<GameSpeed, { think: number; settle: number }> = {
+  slow: { think: 2300, settle: 800 }, // ~3.1s — deliberate
+  normal: { think: 1500, settle: 550 }, // ~2.0s
+  fast: { think: 950, settle: 350 }, // ~1.3s — snappy but not unhinged
+};
+
 export interface GameOptions {
   players?: number; // total seats, default 3
   difficulty?: Difficulty; // bot strength, default 'medium'
+  speed?: GameSpeed; // pacing, default from settings ('normal')
   humanSeat?: number; // which seat the human plays, default 0
   seed?: number; // fix for deterministic play/tests; otherwise random
   /** Shorthand: sets both think and settle to this. Pass 0 for instant (tests). */
   botDelayMs?: number;
-  thinkMs?: number; // a bot "thinks" before revealing its move (default 2300)
-  settleMs?: number; // pause after a move so the table can read it (default 800)
+  thinkMs?: number; // fixed override (else derived from speed)
+  settleMs?: number; // fixed override (else derived from speed)
   /**
    * When the human's last card is a trick, drive the forced draw-and-play as a
    * paced, narrated sequence (and let the human choose a drawn Ace's value)
@@ -90,10 +100,18 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const humanSeat = opts.humanSeat ?? 0;
   // Deliberate pacing: a bot turn takes thinkMs + settleMs (~3.1s) so the table
   // is readable. botDelayMs is a shorthand (0 = instant, used by the tests).
-  const thinkMs = opts.thinkMs ?? opts.botDelayMs ?? 2300;
-  const settleMs = opts.settleMs ?? opts.botDelayMs ?? 800;
   const interactiveStranded = opts.interactiveStranded ?? false;
-  const difficulty = ref<Difficulty>(opts.difficulty ?? loadSettings().difficulty);
+  const settings0 = loadSettings();
+  const difficulty = ref<Difficulty>(opts.difficulty ?? settings0.difficulty);
+  const speed = ref<GameSpeed>(opts.speed ?? settings0.speed);
+
+  // A fixed think/settle override (used by headless tests) wins; otherwise the
+  // pace follows the live `speed` setting and can change mid-game.
+  const fixedPace =
+    opts.thinkMs !== undefined || opts.settleMs !== undefined || opts.botDelayMs !== undefined
+      ? { think: opts.thinkMs ?? opts.botDelayMs ?? 0, settle: opts.settleMs ?? opts.botDelayMs ?? 0 }
+      : null;
+  const pace = (): { think: number; settle: number } => fixedPace ?? SPEED_PRESETS[speed.value];
 
   let rngBox = rngFromState({ seed: opts.seed ?? 1, calls: 0 });
 
@@ -263,6 +281,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     try {
       while (state.value.phase === 'playing') {
         const cur = state.value.current;
+        const { think, settle } = pace();
 
         if (cur === humanSeat) {
           const hand = state.value.players[cur].hand;
@@ -278,16 +297,16 @@ export function useSnakeGame(opts: GameOptions = {}) {
             awaitingHuman.value = true;
             return; // wait for play()
           }
-          await delay(settleMs); // a stranded trick auto-resolved (or a bite ended it)
+          await delay(settle); // a stranded trick auto-resolved (or a bite ended it)
           continue;
         }
 
         thinkingSeat.value = cur;
-        await delay(thinkMs);
+        await delay(think);
         thinkingSeat.value = null;
         stepBot();
         flushEvents();
-        await delay(settleMs);
+        await delay(settle);
       }
       onRoundEnd();
     } finally {
@@ -314,8 +333,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
     awaitingStrandedAce.value = false;
   }
 
-  // stranded pacing collapses to instant when delays are off (headless/tests)
-  const strandedPace = (ms: number) => (settleMs <= 0 ? 0 : ms);
+  // stranded pacing scales with the current speed (and is instant when off)
+  const strandedPace = (ms: number) => (pace().settle <= 0 ? 0 : Math.round(ms * (pace().settle / 800)));
 
   async function resolveHumanStranded(): Promise<void> {
     const cur = state.value.current;
@@ -401,11 +420,19 @@ export function useSnakeGame(opts: GameOptions = {}) {
 
   // ----------------------------------------------------------------- public API
 
+  function persistSettings(): void {
+    saveSettings({ difficulty: difficulty.value, speed: speed.value });
+  }
+
+  /** Change the bot pacing live (takes effect on the next bot turn). */
+  function setSpeed(s: GameSpeed): void {
+    speed.value = s;
+    persistSettings();
+  }
+
   async function newGame(diff?: Difficulty): Promise<void> {
-    if (diff) {
-      difficulty.value = diff;
-      saveSettings({ difficulty: diff });
-    }
+    if (diff) difficulty.value = diff;
+    persistSettings();
     rngBox = rngFromState({ seed: opts.seed ?? Math.floor(Math.random() * 0x7fffffff), calls: 0 });
     const dealer = randInt(rngBox.rng, n);
     state.value = startRound(initialPlayers(), dealer, rngBox.rng);
@@ -457,6 +484,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     snake,
     beat,
     record,
+    speed,
     strandedNote,
     strandedDrawn,
     awaitingStrandedAce,
@@ -484,6 +512,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     play,
     playStrandedAce,
     nextRound,
+    setSpeed,
     loadSaved,
     resume,
   };

@@ -8,8 +8,13 @@ import type { Difficulty } from '../engine/types';
 
 const game = useSnakeGame({ players: 3, interactiveStranded: true });
 const difficulty = ref<Difficulty>(game.difficulty.value);
+const speed = ref(game.speed.value);
 const selectedAce = ref<number | null>(null);
 const showRules = ref(false);
+
+function changeSpeed() {
+  game.setSpeed(speed.value);
+}
 
 onMounted(() => {
   if (game.loadSaved()) {
@@ -133,6 +138,14 @@ const turnInfo = computed(() => {
             <option value="easy">easy</option>
             <option value="medium">medium</option>
             <option value="hard">hard</option>
+          </select>
+        </label>
+        <label class="diff">
+          Speed
+          <select v-model="speed" @change="changeSpeed">
+            <option value="slow">slow</option>
+            <option value="normal">normal</option>
+            <option value="fast">fast</option>
           </select>
         </label>
         <button class="ghost" @click="showRules = true">Rules</button>
@@ -269,13 +282,14 @@ const turnInfo = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px 14px;
   flex-wrap: wrap;
 }
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 0 0 auto;
 }
 .crest {
   width: 34px;
@@ -284,10 +298,10 @@ const turnInfo = computed(() => {
 .bar h1 {
   font-family: var(--display);
   font-weight: 900;
-  letter-spacing: 0.16em;
-  padding-left: 0.16em;
+  letter-spacing: 0.12em;
+  padding-left: 0.12em;
   margin: 0;
-  font-size: 34px;
+  font-size: 32px;
   background: linear-gradient(95deg, var(--gold), var(--gold-bright) 50%, var(--gold));
   -webkit-background-clip: text;
   background-clip: text;
@@ -296,8 +310,10 @@ const turnInfo = computed(() => {
 }
 .controls {
   display: flex;
-  gap: 12px;
+  gap: 8px 10px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   font-family: var(--mono);
   font-size: 12px;
 }
@@ -310,17 +326,18 @@ const turnInfo = computed(() => {
 }
 .diff {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   color: var(--ink-soft);
+  white-space: nowrap;
 }
 button,
 select {
   font-family: var(--mono);
-  font-size: 13px;
-  padding: 6px 10px;
+  font-size: 12px;
+  padding: 5px 8px;
   border: 1px solid var(--gold);
   border-radius: 6px;
   background: var(--bone);
@@ -771,13 +788,17 @@ button.ghost {
   }
 }
 
-@media (max-width: 480px) {
-  .bar h1 {
-    font-size: 28px;
+@media (max-width: 620px) {
+  .bar {
+    flex-direction: column;
+    align-items: stretch;
   }
   .controls {
     width: 100%;
     justify-content: space-between;
+  }
+  .bar h1 {
+    font-size: 28px;
   }
 }
 </style>

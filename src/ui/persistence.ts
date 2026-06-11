@@ -4,7 +4,7 @@
 import type { RngState } from '../engine/rng';
 import type { LegalMove } from '../engine/rules';
 import type { Difficulty, GameState } from '../engine/types';
-import type { SnakeSegment } from './composables/useSnakeGame';
+import type { GameSpeed, SnakeSegment } from './composables/useSnakeGame';
 
 const VERSION = 1;
 const K_SETTINGS = 'snake:settings:v1';
@@ -13,6 +13,7 @@ const K_SAVE = 'snake:save:v1';
 
 export interface Settings {
   difficulty: Difficulty;
+  speed: GameSpeed;
 }
 export interface Record {
   wins: number;
@@ -75,7 +76,8 @@ function remove(key: string): void {
 // settings -------------------------------------------------------------------
 
 export function loadSettings(): Settings {
-  return read<Settings>(K_SETTINGS) ?? { difficulty: 'medium' };
+  const s = read<Partial<Settings>>(K_SETTINGS);
+  return { difficulty: s?.difficulty ?? 'medium', speed: s?.speed ?? 'normal' };
 }
 export function saveSettings(settings: Settings): void {
   write(K_SETTINGS, settings);

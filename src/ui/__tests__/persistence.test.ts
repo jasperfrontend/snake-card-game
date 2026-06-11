@@ -54,6 +54,14 @@ describe('persistence', () => {
     expect(loadSettings().difficulty).toBe('hard');
   });
 
+  it('remembers the chosen speed and a fresh instance picks it up', async () => {
+    const g = useSnakeGame({ players: 3, seed: 9, botDelayMs: 0 });
+    await g.newGame();
+    g.setSpeed('fast');
+    expect(loadSettings().speed).toBe('fast');
+    expect(useSnakeGame({ players: 3, seed: 9 }).speed.value).toBe('fast');
+  });
+
   it('saves an in-progress game and restores it faithfully', async () => {
     const g = useSnakeGame({ players: 3, seed: 777, botDelayMs: 0, difficulty: 'medium' });
     await g.newGame();

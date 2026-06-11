@@ -80,6 +80,15 @@ watch(
 const beatIsBig = computed(() => !!activeBeat.value && BIG.has(activeBeat.value.type));
 const games = computed(() => game.record.value.wins + game.record.value.losses);
 
+// final standings, best (lowest score) first — for the game-over banner
+const standings = computed(() =>
+  game.scores.value
+    .map((s, i) => ({ i, s }))
+    .sort((a, b) => a.s - b.s)
+    .map(({ i, s }) => `${game.playerName(i)} ${s}`)
+    .join('  ·  '),
+);
+
 // who's playing right now — a loud, central indicator
 const turnInfo = computed(() => {
   if (game.gameOver.value || game.roundResult.value) return null;
@@ -254,13 +263,20 @@ const turnInfo = computed(() => {
     </section>
 
     <section v-if="game.gameOver.value" class="banner over">
-      <strong v-if="game.loser.value === humanSeat">The snake got you. You lose this one.</strong>
-      <strong v-else>{{ game.playerName(game.loser.value ?? 0) }} hit 100 first — you survive. You win!</strong>
+      <div class="over-msg">
+        <strong v-if="game.loser.value === humanSeat">The snake got you — you lose. Highest score takes the bite.</strong>
+        <strong v-else>{{ game.playerName(game.loser.value ?? 0) }} hit 100 first — you survive. You win!</strong>
+        <span class="over-sub">Lowest score wins · {{ standings }}</span>
+      </div>
       <button class="primary" @click="start">Play again</button>
     </section>
 
-    <section class="tally" aria-label="Pins this game">
-      <p class="eyebrow">Pins this game · the race you actually want to win</p>
+    <section class="tally" aria-label="Pins and bites this game">
+      <p class="eyebrow">Pins &amp; bites this game</p>
+      <p class="tally-note">
+        Lowest score wins. A pin loads <b>+5</b> on everyone else; a bite costs <b>you +10</b> — one bite
+        hurts like two enemy pins.
+      </p>
       <div class="tally-grid">
         <div
           v-for="(pins, i) in game.pinCounts.value"
@@ -676,6 +692,17 @@ button.ghost {
   color: var(--bone);
   border-color: rgba(215, 180, 92, 0.4);
 }
+.over-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.over-sub {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--gold-bright);
+}
 .banner.over .primary {
   background: var(--gold-bright);
   border-color: var(--gold-bright);
@@ -684,6 +711,15 @@ button.ghost {
 
 .tally {
   margin-top: 28px;
+}
+.tally-note {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: -2px 0 12px;
+}
+.tally-note b {
+  color: var(--ink);
+  font-weight: 600;
 }
 .tally-grid {
   display: grid;

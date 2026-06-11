@@ -197,17 +197,9 @@ const turnInfo = computed(() => {
     </section>
 
     <Transition name="pop">
-      <section v-if="game.strandedNote.value || game.awaitingStrandedAce.value" class="stranded">
+      <section v-if="game.strandedNote.value" class="stranded">
         <p class="eyebrow">Stuck with a trick</p>
         <p class="s-note">{{ game.strandedNote.value }}</p>
-        <div v-if="game.strandedDrawn.value" class="s-card">
-          <CardFace :card="game.strandedDrawn.value" />
-        </div>
-        <div v-if="game.awaitingStrandedAce.value" class="ace-picker centered">
-          <button v-for="v in game.aceValues.value" :key="v" class="primary" @click="game.playStrandedAce(v)">
-            {{ v === 0 ? 'feint · 0' : v }}
-          </button>
-        </div>
       </section>
     </Transition>
 
@@ -221,10 +213,12 @@ const turnInfo = computed(() => {
           :class="{
             legal: game.awaitingHuman.value && game.legalIndices.value.has(i),
             picking: selectedAce === i,
+            'just-drawn': c === game.strandedDrawn.value,
           }"
           :disabled="!game.awaitingHuman.value || !game.legalIndices.value.has(i)"
           @click="clickCard(i)"
         >
+          <span v-if="c === game.strandedDrawn.value" class="drawn-tag">drawn</span>
           <CardFace :card="c" />
         </button>
       </div>
@@ -243,7 +237,10 @@ const turnInfo = computed(() => {
         <span v-if="game.thinkingSeat.value !== null">{{ game.playerName(game.thinkingSeat.value) }} is thinking…</span>
         <span v-else>Watching the table…</span>
       </p>
-      <p v-else-if="game.awaitingHuman.value && selectedAce === null" class="waiting your-turn">
+      <p
+        v-else-if="game.awaitingHuman.value && selectedAce === null && !game.strandedNote.value"
+        class="waiting your-turn"
+      >
         Your turn — play a glowing card.
       </p>
     </section>
@@ -582,15 +579,10 @@ button.ghost {
   font-family: var(--mono);
   font-size: 12px;
 }
-.ace-picker.centered {
-  justify-content: center;
-  margin-top: 12px;
-}
-
-/* ---- stranded trick: a clear, paced moment ---- */
+/* ---- stranded trick: a clear, paced moment, then the normal hand ---- */
 .stranded {
   margin-top: 24px;
-  padding: 18px 18px 20px;
+  padding: 14px 18px 16px;
   border: 1.5px solid var(--gold-bright);
   border-radius: 12px;
   background: linear-gradient(160deg, #fbf3df, #f3e7c9);
@@ -599,15 +591,34 @@ button.ghost {
 }
 .stranded .s-note {
   font-family: var(--body);
-  font-size: 18px;
+  font-size: 17px;
   color: var(--ink);
   margin: 2px 0 0;
 }
-.stranded .s-card {
-  display: flex;
-  justify-content: center;
-  margin-top: 14px;
+
+/* the freshly drawn card, highlighted in your hand */
+.hand-card {
+  position: relative;
+}
+.hand-card.just-drawn {
   animation: dealin 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.drawn-tag {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cardback);
+  background: var(--gold-bright);
+  border-radius: 999px;
+  padding: 1px 6px;
+  box-shadow: 0 3px 8px -3px rgba(168, 123, 43, 0.7);
 }
 @keyframes dealin {
   from {

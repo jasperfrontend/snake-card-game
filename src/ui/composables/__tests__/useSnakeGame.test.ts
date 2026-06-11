@@ -44,19 +44,17 @@ describe('useSnakeGame — full game', () => {
     expect(a.loser.value).toBe(b.loser.value);
   });
 
-  it('drives the interactive stranded-trick path to completion (incl. Ace choice)', async () => {
-    // interactiveStranded routes the human's lone-trick turn through the paced,
-    // choosable flow; the driver must handle the extra Ace-value pause.
+  it('routes the interactive stranded-trick turn into the normal hand (draw then choose)', async () => {
+    // interactiveStranded forces a draw, drops the drawn card into the hand, and
+    // hands off to the normal awaiting-human turn — no bespoke prompt. The driver
+    // only needs to handle awaitingHuman; the two-card choice flows through play().
+    let strandedTurnsSeen = 0;
     for (const seed of [3, 17, 88, 271, 909]) {
       const g = useSnakeGame({ players: 3, difficulty: 'easy', seed, botDelayMs: 0, interactiveStranded: true });
       await g.newGame();
-      let strandedAcePrompts = 0;
       let guard = 0;
       while (!g.gameOver.value && guard++ < 30000) {
-        if (g.awaitingStrandedAce.value) {
-          strandedAcePrompts++;
-          await g.playStrandedAce(0); // feint — always legal
-        } else if (g.awaitingHuman.value) {
+        if (g.awaitingHuman.value) {
           await g.play(smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value)!);
         } else if (g.state.value.phase === 'roundEnd') {
           await g.nextRound();
@@ -64,11 +62,10 @@ describe('useSnakeGame — full game', () => {
       }
       expect(g.gameOver.value).toBe(true);
       expect(Math.max(...g.scores.value)).toBeGreaterThanOrEqual(100);
-      // when an Ace pause does occur, the prompt state must always be cleared after
-      expect(g.awaitingStrandedAce.value).toBe(false);
       expect(g.strandedNote.value).toBeNull();
-      void strandedAcePrompts;
+      strandedTurnsSeen += g.log.value.filter((l) => l.startsWith('Down to a')).length;
     }
+    expect(strandedTurnsSeen).toBeGreaterThan(0); // the stranded path really runs
   });
 
   it('only offers legal cards to the human while awaiting input', async () => {

@@ -11,11 +11,11 @@
 import { computed, ref, type Ref } from 'vue';
 import { randInt, rngFromState } from '../../engine/rng';
 import {
-  advanceTurn,
   beginTurn,
   drawCard,
   endBite,
   executeMove,
+  legalMoves as computeLegalMoves,
   pickLoser,
   startRound,
   type ChoosePolicy,
@@ -127,10 +127,10 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const beat = ref<Beat | null>(null);
   const record = ref<PlayRecord>(loadRecord());
 
-  // the stranded-trick reveal (human only): a narrated draw-and-play
+  // the stranded-trick moment (human only): a narrated forced draw, after which
+  // the drawn card joins the hand and the normal click-to-play system takes over
   const strandedNote = ref<string | null>(null);
   const strandedDrawn = ref<Card | null>(null);
-  const awaitingStrandedAce = ref(false);
 
   let ticking = false;
   let segId = 0;
@@ -286,9 +286,9 @@ export function useSnakeGame(opts: GameOptions = {}) {
         if (cur === humanSeat) {
           const hand = state.value.players[cur].hand;
           if (interactiveStranded && hand.length === 1 && hand[0].kind !== 'food') {
-            await resolveHumanStranded();
-            if (awaitingStrandedAce.value) return; // wait for playStrandedAce()
-            continue;
+            await drawForHumanStranded();
+            if (awaitingHuman.value) return; // now choose either card normally
+            continue; // round ended (deck exhausted, a degenerate bite)
           }
           const prep = beginTurn(state.value, rngBox.rng);
           flushEvents();
@@ -324,25 +324,28 @@ export function useSnakeGame(opts: GameOptions = {}) {
   }
 
   // -------------------------------------------------- stranded trick (human only)
-  // Mirrors beginTurn's stranded branch step-by-step, but paced and narrated so
-  // the forced draw-and-play is legible — and the human picks a drawn Ace's value.
+  // When the human's last card is a trick they can't play it (no trick as the
+  // last card), so they must draw one. We narrate that forced draw, drop the
+  // drawn card into the hand, and then hand off to the normal click-to-play
+  // turn: with two cards the trick is no longer "last", so the player may play
+  // EITHER the trick or the drawn card — whichever they prefer. (Bots and the
+  // headless runner keep beginTurn's bundled resolution, so the sim is intact.)
 
   function finishStranded(): void {
     strandedNote.value = null;
     strandedDrawn.value = null;
-    awaitingStrandedAce.value = false;
   }
 
   // stranded pacing scales with the current speed (and is instant when off)
   const strandedPace = (ms: number) => (pace().settle <= 0 ? 0 : Math.round(ms * (pace().settle / 800)));
 
-  async function resolveHumanStranded(): Promise<void> {
+  async function drawForHumanStranded(): Promise<void> {
     const cur = state.value.current;
     const hand = state.value.players[cur].hand;
     const trick = hand[0];
     state.value.roundMeta.plays++; // count the turn, exactly as beginTurn would
 
-    strandedNote.value = `Only a ${trickName(trick.kind)} left — you must draw a card and play it.`;
+    strandedNote.value = `Only a ${trickName(trick.kind)} left — you must draw a card first.`;
     await delay(strandedPace(900));
 
     const drawn = drawCard(state.value, rngBox.rng);
@@ -355,52 +358,13 @@ export function useSnakeGame(opts: GameOptions = {}) {
     }
     hand.push(drawn);
     strandedDrawn.value = drawn;
-    strandedNote.value = `You drew ${cardLabel(drawn)}.`;
     log.value.push(`Down to a ${trickName(trick.kind)} — drew ${cardLabel(drawn)}.`);
-    await delay(strandedPace(1100));
+    strandedNote.value = `You drew ${cardLabel(drawn)}. Play your ${trickName(trick.kind)} or the new card.`;
+    await delay(strandedPace(700));
 
-    const length = state.value.length;
-    const mx = state.value.maxLength;
-
-    if (drawn.kind === 'food') {
-      if (length + (drawn.value as number) <= mx) {
-        strandedNote.value = `Playing the ${drawn.value}.`;
-        await delay(strandedPace(550));
-        executeMove(state.value, 1, undefined, rngBox.rng);
-        flushEvents();
-      } else {
-        strandedNote.value = `The ${drawn.value} would overshoot — you keep both and pass.`;
-        log.value.push(`The ${drawn.value} is too big — kept both and passed.`);
-        advanceTurn(state.value);
-        await delay(strandedPace(1100));
-      }
-      finishStranded();
-      return;
-    }
-
-    if (drawn.kind === 'A') {
-      // give the human the choice the engine would otherwise make for them
-      strandedNote.value = `You drew a Strike — choose its value.`;
-      awaitingStrandedAce.value = true;
-      return; // run() returns; playStrandedAce() finishes it
-    }
-
-    // K / Q / J / Joker — always playable at hand size 2, so play it
-    strandedNote.value = `Playing the ${trickName(drawn.kind)}.`;
-    await delay(strandedPace(550));
-    executeMove(state.value, 1, undefined, rngBox.rng);
-    flushEvents();
-    finishStranded();
-  }
-
-  async function playStrandedAce(value: number): Promise<void> {
-    if (!awaitingStrandedAce.value) return;
-    awaitingStrandedAce.value = false;
-    strandedNote.value = null;
-    executeMove(state.value, 1, value, rngBox.rng); // the drawn Ace sits at index 1
-    flushEvents();
-    finishStranded();
-    await run();
+    // hand off to the normal turn: both cards are now choosable if legal
+    legalMoves.value = computeLegalMoves(hand, state.value.length, state.value.maxLength);
+    awaitingHuman.value = true;
   }
 
   function onRoundEnd(): void {
@@ -455,6 +419,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     if (!awaitingHuman.value) return;
     awaitingHuman.value = false;
     legalMoves.value = [];
+    finishStranded(); // clear any "you drew…" note once the choice is made
     executeMove(state.value, move.cardIndex, move.aceValue, rngBox.rng);
     flushEvents();
     await run();
@@ -487,7 +452,6 @@ export function useSnakeGame(opts: GameOptions = {}) {
     speed,
     strandedNote,
     strandedDrawn,
-    awaitingStrandedAce,
 
     length: computed(() => state.value.length),
     maxLength: computed(() => state.value.maxLength),
@@ -510,7 +474,6 @@ export function useSnakeGame(opts: GameOptions = {}) {
     humanSeat,
     newGame,
     play,
-    playStrandedAce,
     nextRound,
     setSpeed,
     loadSaved,

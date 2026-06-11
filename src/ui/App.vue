@@ -205,6 +205,17 @@ const turnInfo = computed(() => {
       </div>
     </section>
 
+    <div
+      class="flow"
+      :class="{ rev: game.direction.value === -1 }"
+      role="img"
+      :aria-label="game.direction.value === 1 ? 'play order runs left to right' : 'play order is reversed, right to left'"
+    >
+      <span class="shaft"></span>
+      <span class="head"></span>
+      <span class="tag">play order</span>
+    </div>
+
     <Transition name="pop">
       <section v-if="game.strandedNote.value" class="stranded">
         <p class="eyebrow">Stuck with a trick</p>
@@ -564,6 +575,69 @@ button.ghost {
   transform: scale(0.66);
   transform-origin: left;
   height: 44px;
+}
+
+/* ---- direction-of-play arrow (flips on a King/Coil) ---- */
+.flow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 18px;
+  margin: 16px 0 2px;
+}
+.flow .shaft {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(168, 123, 43, 0.12), var(--gold) 75%);
+  position: relative;
+  overflow: hidden;
+}
+.flow .shaft::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, var(--gold-bright) 0 7px, transparent 7px 18px);
+  opacity: 0.45;
+  animation: flow 0.9s linear infinite;
+}
+.flow .head {
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 14px solid var(--gold);
+  margin-left: -1px;
+}
+.flow .tag {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bone);
+  padding: 0 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.flow.rev {
+  flex-direction: row-reverse;
+}
+.flow.rev .shaft {
+  background: linear-gradient(270deg, rgba(168, 123, 43, 0.12), var(--gold) 75%);
+}
+.flow.rev .shaft::after {
+  animation-direction: reverse;
+}
+.flow.rev .head {
+  transform: rotate(180deg);
+}
+@keyframes flow {
+  to {
+    background-position: 18px 0;
+  }
 }
 
 .hand-wrap {

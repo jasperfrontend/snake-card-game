@@ -40,7 +40,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
       <div class="block">
         <h3>Your turn</h3>
         <ul>
-          <li>Play exactly <b>one</b> card, then say the snake's new length out loud.</li>
+          <li>Play exactly <b>one</b> card per round.</li>
           <li>You cannot push the snake <b>over its max</b> ({{ perPlayer }} × players — that's <b>{{ maxLength }}</b> at this table).</li>
           <li>You cannot play a <b>trick</b> as your last card — keep a number for the bottom.</li>
           <li>Play your hand down to empty, then draw a fresh 4.</li>

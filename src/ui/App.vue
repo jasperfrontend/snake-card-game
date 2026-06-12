@@ -170,9 +170,11 @@ const turnInfo = computed(() => {
         :difficulty="game.difficulty.value"
         :speed="game.speed.value"
         :hand-size="game.handSize.value"
+        :tooltips="game.tooltips.value"
         @update:difficulty="game.setDifficulty($event)"
         @update:speed="game.setSpeed($event)"
         @update:handSize="game.setHandSize($event)"
+        @update:tooltips="game.setTooltips($event)"
         @new-game="settingsNewGame"
         @close="showSettings = false"
       />
@@ -260,7 +262,11 @@ const turnInfo = computed(() => {
           @click="clickCard(i)"
         >
           <span v-if="c === game.strandedDrawn.value" class="drawn-tag">drawn</span>
-          <CardFace :card="c" :dimmed="!game.awaitingHuman.value || !game.legalIndices.value.has(i)" />
+          <CardFace
+            :card="c"
+            :dimmed="!game.awaitingHuman.value || !game.legalIndices.value.has(i)"
+            :tips="game.tooltips.value"
+          />
         </button>
 
         <button

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import type { Card } from '../../engine/types';
 
-const props = defineProps<{ card?: Card; faceDown?: boolean; dimmed?: boolean }>();
+const props = defineProps<{ card?: Card; faceDown?: boolean; dimmed?: boolean; tips?: boolean }>();
 
 const TRICK_NAMES: Record<string, string> = {
   K: 'Coil',
@@ -49,7 +49,7 @@ const description = computed(() => {
         <div v-if="name" class="name">{{ name }}</div>
       </template>
     </div>
-    <span v-if="description" class="tip" role="tooltip">{{ description }}</span>
+    <span v-if="description && tips !== false" class="tip" role="tooltip">{{ description }}</span>
   </div>
 </template>
 

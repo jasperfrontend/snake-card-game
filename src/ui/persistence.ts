@@ -17,6 +17,7 @@ export interface Settings {
   difficulty: Difficulty;
   speed: GameSpeed;
   handSize: number;
+  tooltips: boolean;
 }
 export interface Record {
   wins: number;
@@ -82,7 +83,12 @@ function remove(key: string): void {
 
 export function loadSettings(): Settings {
   const s = read<Partial<Settings>>(K_SETTINGS);
-  return { difficulty: s?.difficulty ?? 'medium', speed: s?.speed ?? 'normal', handSize: s?.handSize ?? 4 };
+  return {
+    difficulty: s?.difficulty ?? 'medium',
+    speed: s?.speed ?? 'normal',
+    handSize: s?.handSize ?? 4,
+    tooltips: s?.tooltips ?? true,
+  };
 }
 export function saveSettings(settings: Settings): void {
   write(K_SETTINGS, settings);

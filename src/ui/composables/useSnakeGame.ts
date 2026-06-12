@@ -109,6 +109,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const difficulty = ref<Difficulty>(opts.difficulty ?? settings0.difficulty);
   const speed = ref<GameSpeed>(opts.speed ?? settings0.speed);
   const handSize = ref<number>(opts.handSize ?? settings0.handSize); // applies on the next new game
+  const tooltips = ref<boolean>(settings0.tooltips); // card hover tooltips on/off (live)
 
   // A fixed think/settle override (used by headless tests) wins; otherwise the
   // pace follows the live `speed` setting and can change mid-game.
@@ -417,7 +418,12 @@ export function useSnakeGame(opts: GameOptions = {}) {
   // ----------------------------------------------------------------- public API
 
   function persistSettings(): void {
-    saveSettings({ difficulty: difficulty.value, speed: speed.value, handSize: handSize.value });
+    saveSettings({
+      difficulty: difficulty.value,
+      speed: speed.value,
+      handSize: handSize.value,
+      tooltips: tooltips.value,
+    });
   }
 
   /** Change the bot pacing live (takes effect on the next bot turn). */
@@ -435,6 +441,12 @@ export function useSnakeGame(opts: GameOptions = {}) {
   /** Change hand size; takes effect on the next new game. */
   function setHandSize(h: number): void {
     handSize.value = h;
+    persistSettings();
+  }
+
+  /** Toggle card hover tooltips (applies immediately). */
+  function setTooltips(on: boolean): void {
+    tooltips.value = on;
     persistSettings();
   }
 
@@ -526,6 +538,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     record,
     speed,
     handSize,
+    tooltips,
     strandedNote,
     strandedDrawn,
     pinCounts,
@@ -558,6 +571,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     setSpeed,
     setDifficulty,
     setHandSize,
+    setTooltips,
     loadSaved,
     resume,
   };

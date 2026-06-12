@@ -3,13 +3,14 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { Difficulty } from '../../engine/types';
 import type { GameSpeed } from '../composables/useSnakeGame';
 
-defineProps<{ difficulty: Difficulty; speed: GameSpeed; handSize: number }>();
+defineProps<{ difficulty: Difficulty; speed: GameSpeed; handSize: number; tooltips: boolean }>();
 const emit = defineEmits<{
   close: [];
   newGame: [];
   'update:difficulty': [Difficulty];
   'update:speed': [GameSpeed];
   'update:handSize': [number];
+  'update:tooltips': [boolean];
 }>();
 
 const closeBtn = ref<HTMLButtonElement | null>(null);
@@ -104,7 +105,24 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
         </div>
       </div>
 
-      <p class="note">Speed changes apply right away. Bots and hand size take effect on your next game.</p>
+      <div class="row">
+        <div class="row-head">
+          <span class="r-label">Tooltips</span>
+          <span class="r-tag live">live</span>
+        </div>
+        <div class="seg" role="group" aria-label="Card tooltips">
+          <button class="seg-btn" :class="{ on: tooltips }" @click="emit('update:tooltips', true)">
+            <span class="s-main">On</span>
+            <span class="s-hint">hover help</span>
+          </button>
+          <button class="seg-btn" :class="{ on: !tooltips }" @click="emit('update:tooltips', false)">
+            <span class="s-main">Off</span>
+            <span class="s-hint">clean</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="note">Speed and tooltips apply right away. Bots and hand size take effect on your next game.</p>
 
       <div class="actions">
         <button class="ghost" @click="emit('close')">Done</button>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import {computed, onBeforeUnmount, onMounted, ref} from 'vue';
 
 const props = defineProps<{ maxLength: number; players: number }>();
 const emit = defineEmits<{ close: [] }>();
@@ -10,7 +10,7 @@ const TRICKS = [
   { rank: 'K', name: 'Coil', does: 'Reverse the direction of play.' },
   { rank: 'J', name: 'Slip', does: 'Skip the next player.' },
   { rank: 'Q', name: 'Shed', does: "Halve the snake's length, rounded down." },
-  { rank: 'A', name: 'Strike', does: 'Wild — count it as any value 0–9. Played as 0 it is a feint.' },
+  {rank: 'A', name: 'Strike', does: 'Wild, count it as any value 0-9. Played as 0 it is a feint.'},
   { rank: '★', name: 'Scramble', does: 'The next player bins their whole hand and draws 4 fresh.' },
 ];
 
@@ -33,7 +33,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
       <h2 id="rules-title">Don't get eaten</h2>
       <p class="lede">
         A snake grows down the middle of the table. Everyone feeds it; nobody wants to
-        <b>overfeed</b> it. Every card you play makes it longer. <b>Points are bad</b> — first to <b>100</b> loses,
+        <b>overfeed</b> it. Every card you play makes it longer. <b>Points are bad</b>, first to <b>100</b> loses,
         everyone still standing wins.
       </p>
 
@@ -42,18 +42,18 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
         <ul>
           <li>Play exactly <b>one</b> card per round.</li>
           <li>
-            You cannot push the snake <b>over its max</b> ({{ perPlayer }} × players — that's <b>{{ maxLength }}</b> at
+            You cannot push the snake <b>over its max</b> ({{ perPlayer }} × players, that's <b>{{ maxLength }}</b> at
             this table).
           </li>
-          <li>You cannot play a <b>trick</b> as your last card — keep a number for the bottom.</li>
+          <li>You cannot play a <b>trick</b> as your last card, keep a number for the bottom.</li>
           <li>Play your hand down to empty, then draw a fresh 4.</li>
-          <li>Dealt a rotten hand? <b>Forfeit</b> it for a fresh one — but that spends your turn.</li>
+          <li>Dealt a rotten hand? <b>Forfeit</b> it for a fresh one, but that spends your turn.</li>
         </ul>
       </div>
 
       <div class="block">
         <h3>Food &amp; tricks</h3>
-        <p class="note">Numbers 2–10 feed the snake their face value. Tricks bend the rules instead.</p>
+        <p class="note">Numbers 2-10 feed the snake their face value. Tricks bend the rules instead.</p>
         <div class="trickgrid">
           <div v-for="t in TRICKS" :key="t.rank" class="tcard">
             <div class="rank">{{ t.rank }}</div>
@@ -74,7 +74,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
         <div class="end bad">
           <h4>The Bite <span>you lose the round</span></h4>
           <p>
-            It's your turn and every card overshoots, with no trick to escape. The snake bites you — take <b>10</b>.
+            It's your turn and every card overshoots, with no trick to escape. The snake bites you, take <b>10</b>.
           </p>
         </div>
       </div>

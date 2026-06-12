@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { useSnakeGame, type Beat } from './composables/useSnakeGame';
-import { hasSeenRules, markRulesSeen } from './persistence';
+import {computed, onMounted, ref, watch} from 'vue';
+import {type Beat, useSnakeGame} from './composables/useSnakeGame';
+import {hasSeenRules, markRulesSeen} from './persistence';
 import CardFace from './components/CardFace.vue';
 import SnakeRow from './components/SnakeRow.vue';
 import RulesModal from './components/RulesModal.vue';
@@ -87,7 +87,7 @@ watch(
 const beatIsBig = computed(() => !!activeBeat.value && BIG.has(activeBeat.value.type));
 const games = computed(() => game.record.value.wins + game.record.value.losses);
 
-// final standings, best (lowest score) first — for the game-over banner
+// final standings, best (lowest score) first, for the game-over banner
 const standings = computed(() =>
   game.scores.value
     .map((s, i) => ({ i, s }))
@@ -96,7 +96,7 @@ const standings = computed(() =>
     .join('  ·  '),
 );
 
-// who's playing right now — a loud, central indicator
+// who's playing right now, a loud, central indicator
 const turnInfo = computed(() => {
   if (game.gameOver.value || game.roundResult.value) return null;
   const cur = game.current.value;
@@ -106,7 +106,7 @@ const turnInfo = computed(() => {
     seat: cur,
     text: you
       ? game.awaitingHuman.value
-        ? 'Your turn — play a card'
+        ? 'Your turn: play a card'
         : 'Your turn'
       : `${game.playerName(cur)} is playing…`,
   };
@@ -272,7 +272,7 @@ const turnInfo = computed(() => {
         <button
           v-if="game.canForfeit.value"
           class="forfeit"
-          title="Bin this whole hand and draw a fresh one — this spends your turn"
+          title="Bin this whole hand and draw a fresh one. This spends your turn"
           @click="game.forfeitHand()"
         >
           <span class="ff-icon">⟳</span>
@@ -301,7 +301,7 @@ const turnInfo = computed(() => {
         v-else-if="game.awaitingHuman.value && selectedAce === null && !game.strandedNote.value"
         class="waiting your-turn"
       >
-        Your turn — play a glowing card.
+        Your turn. Play a glowing card.
       </p>
     </section>
 
@@ -320,9 +320,9 @@ const turnInfo = computed(() => {
     <section v-if="game.gameOver.value" class="banner over">
       <div class="over-msg">
         <strong v-if="game.loser.value === humanSeat"
-          >The snake got you — you lose. Highest score takes the bite.</strong
+        >The snake got you! You lose. Highest score takes the bite.</strong
         >
-        <strong v-else>{{ game.playerName(game.loser.value ?? 0) }} hit 100 first — you survive. You win!</strong>
+        <strong v-else>{{ game.playerName(game.loser.value ?? 0) }} hit 100 first: you survive. You win!</strong>
         <span class="over-sub">Lowest score wins · {{ standings }}</span>
       </div>
       <button class="primary" @click="start">Play again</button>
@@ -331,7 +331,7 @@ const turnInfo = computed(() => {
     <section class="tally" aria-label="Pins and bites this game">
       <p class="eyebrow">Pins &amp; bites this game</p>
       <p class="tally-note">
-        Lowest score wins. A pin loads <b>+5</b> on everyone else; a bite costs <b>you +10</b> — one bite hurts like two
+        Lowest score wins. A pin loads <b>+5</b> on everyone else; a bite costs <b>you +10</b>: one bite hurts like two
         enemy pins.
       </p>
       <div class="tally-grid">

@@ -1,4 +1,4 @@
-// useSnakeGame — the interactive driver around the pure engine.
+// useSnakeGame: the interactive driver around the pure engine.
 //
 // It owns the live GameState, exposes play(move) for the human, and auto-runs
 // bot turns with a short delay so they feel deliberate. Forced situations
@@ -8,31 +8,31 @@
 // This file may use Vue, browser storage and (UI-side, outside the engine)
 // Math.random for the game seed; the engine itself stays pure and deterministic.
 
-import { computed, ref, type Ref } from 'vue';
-import { randInt, rngFromState } from '../../engine/rng';
+import {computed, ref, type Ref} from 'vue';
+import {randInt, rngFromState} from '../../engine/rng';
 import {
   advanceTurn,
   beginTurn,
+  type ChoosePolicy,
   drawCard,
   endBite,
   executeMove,
+  type LegalMove,
   legalMoves as computeLegalMoves,
   pickLoser,
   startRound,
-  type ChoosePolicy,
-  type LegalMove,
 } from '../../engine/rules';
-import { botChooseMove } from '../../bots/policy';
-import type { Card, Difficulty, GameEvent, GameState, Kind, Move, Player } from '../../engine/types';
+import {botChooseMove} from '../../bots/policy';
+import type {Card, Difficulty, GameEvent, GameState, Kind, Move, Player} from '../../engine/types';
 import {
   clearSave,
   loadRecord,
   loadSave,
   loadSettings,
+  type Record as PlayRecord,
   saveGame,
   saveRecord,
   saveSettings,
-  type Record as PlayRecord,
 } from '../persistence';
 
 /** One visible segment of the snake's body (the cards fed this round). */
@@ -55,9 +55,9 @@ export interface Beat {
 export type GameSpeed = 'slow' | 'normal' | 'fast';
 
 const SPEED_PRESETS: Record<GameSpeed, { think: number; settle: number }> = {
-  slow: { think: 2300, settle: 800 }, // ~3.1s — deliberate
+  slow: {think: 2300, settle: 800}, // ~3.1s, deliberate
   normal: { think: 1500, settle: 550 }, // ~2.0s
-  fast: { think: 950, settle: 350 }, // ~1.3s — snappy but not unhinged
+  fast: {think: 950, settle: 350}, // ~1.3s, snappy but not unhinged
 };
 
 export interface GameOptions {
@@ -144,7 +144,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const pinCounts = ref<number[]>(Array.from({ length: n }, () => 0));
   const biteCounts = ref<number[]>(Array.from({ length: n }, () => 0));
 
-  // forfeit: bin a full, fresh hand for a new one — once per hand (resets when
+  // forfeit: bin a full, fresh hand for a new one. Once per hand (resets when
   // the human's hand refills or a new round deals), so it's a mulligan for a bad
   // hand, not a bite-escape button.
   const forfeitUsed = ref(false);
@@ -229,26 +229,26 @@ export function useSnakeGame(opts: GameOptions = {}) {
       case 'startLength':
         return `Snake starts at ${p.length}.`;
       case 'play':
-        if (p.kind === 'A' && p.feed === 0) return `${who} feint (Ace as 0) — still ${p.length}.`;
+        if (p.kind === 'A' && p.feed === 0) return `${who} feint (Ace as 0), still ${p.length}.`;
         return `${who} feed ${p.feed} → ${p.length}.`;
       case 'shed':
-        return `${who} shed — the snake halves to ${p.length}.`;
+        return `${who} shed: the snake halves to ${p.length}.`;
       case 'coil':
-        return `${who} coil — play reverses.`;
+        return `${who} coil: play reverses.`;
       case 'slip':
-        return `${who} slip — the next player is skipped.`;
+        return `${who} slip: the next player is skipped.`;
       case 'scramble':
-        return `${who} scrambled — whole hand binned, 4 fresh drawn.`;
+        return `${who} scrambled: whole hand binned, 4 fresh drawn.`;
       case 'forfeit':
-        return `${who} forfeit the hand — ${handSize.value} fresh cards.`;
+        return `${who} forfeit the hand: ${handSize.value} fresh cards.`;
       case 'refill':
-        return `${who} empty — draw a fresh 4.`;
+        return `${who} empty: draw a fresh 4.`;
       case 'reshuffle':
         return `Discard reshuffled back into the draw pile.`;
       case 'pin':
         return `${who} PIN the snake at ${state.value.maxLength}! Everyone else +5.`;
       case 'bite':
-        return `${who} BITTEN — cornered, +10.`;
+        return `${who} BITTEN: cornered, +10.`;
       default:
         return '';
     }
@@ -354,7 +354,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
   // last card), so they must draw one. We narrate that forced draw, drop the
   // drawn card into the hand, and then hand off to the normal click-to-play
   // turn: with two cards the trick is no longer "last", so the player may play
-  // EITHER the trick or the drawn card — whichever they prefer. (Bots and the
+  // EITHER the trick or the drawn card, whichever they prefer. (Bots and the
   // headless runner keep beginTurn's bundled resolution, so the sim is intact.)
 
   function finishStranded(): void {
@@ -371,7 +371,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     const trick = hand[0];
     state.value.roundMeta.plays++; // count the turn, exactly as beginTurn would
 
-    strandedNote.value = `Only a ${trickName(trick.kind)} left — you must draw a card first.`;
+    strandedNote.value = `Only a ${trickName(trick.kind)} left. You must draw a card first.`;
     await delay(strandedPace(900));
 
     const drawn = drawCard(state.value, rngBox.rng);
@@ -384,7 +384,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     }
     hand.push(drawn);
     strandedDrawn.value = drawn;
-    log.value.push(`Down to a ${trickName(trick.kind)} — drew ${cardLabel(drawn)}.`);
+    log.value.push(`Down to a ${trickName(trick.kind)}. Drew ${cardLabel(drawn)}.`);
     strandedNote.value = `You drew ${cardLabel(drawn)}. Play your ${trickName(trick.kind)} or the new card.`;
     await delay(strandedPace(700));
 

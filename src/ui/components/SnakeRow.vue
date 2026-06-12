@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { SnakeSegment } from '../composables/useSnakeGame';
+import {computed} from 'vue';
+import type {SnakeSegment} from '../composables/useSnakeGame';
 
 const props = defineProps<{
   segments: SnakeSegment[];
@@ -45,7 +45,7 @@ const room = computed(() => props.maxLength - props.length);
       </TransitionGroup>
     </div>
     <p class="hint">
-      {{ room <= 0 ? 'pinned' : `${room} to the max — land exactly on ${maxLength} to pin` }}
+      {{ room <= 0 ? 'pinned' : `${room} to the max. Land exactly on ${maxLength} to pin` }}
     </p>
   </section>
 </template>

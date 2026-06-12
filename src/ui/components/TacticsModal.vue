@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import {onBeforeUnmount, onMounted, ref} from 'vue';
 
 const emit = defineEmits<{ close: [] }>();
 const closeBtn = ref<HTMLButtonElement | null>(null);
@@ -7,11 +7,11 @@ const closeBtn = ref<HTMLButtonElement | null>(null);
 const TACTICS: { h: string; p: string }[] = [
   {
     h: "It's a pin race, not a survival game",
-    p: 'A pin drops +5 on everyone else and 0 on you — whoever pins least loses. Actively hunt pins; don’t just dodge bites.',
+    p: 'A pin drops +5 on everyone else and 0 on you, whoever pins least loses. Actively hunt pins; don’t just dodge bites.',
   },
   {
     h: 'A bite costs double',
-    p: 'The +10 from a bite is worth two enemy pins. Always keep an out for the danger zone — a trick or a small card — so you’re never cornered.',
+    p: 'The +10 from a bite is worth two enemy pins. Always keep an out for the danger zone, a trick or a small card, so you’re never cornered.',
   },
   {
     h: 'Dump big food early',
@@ -19,15 +19,15 @@ const TACTICS: { h: string; p: string }[] = [
   },
   {
     h: 'Hoard the low cards',
-    p: '2s, 3s and 4s are gold near the max — they nudge the snake safely and let you land on the exact number for a pin.',
+    p: '2s, 3s and 4s are gold near the max, they nudge the snake safely and let you land on the exact number for a pin.',
   },
   {
     h: 'The Ace is your pin',
-    p: 'It’s wild 0–9, so it pins from up to 9 away — your single best win tool. Played as 0 it’s a feint: survive a turn without feeding. Save it for the kill.',
+    p: 'It’s wild 0–9, so it pins from up to 9 away, your single best win tool. Played as 0 it’s a feint: survive a turn without feeding. Save it for the kill.',
   },
   {
     h: 'The Queen is a panic button',
-    p: 'Shed halves the snake — wasted at length 12, a lifesaver at 60. Hold it for when things get dangerously high, and to tee up your own pin afterwards.',
+    p: 'Shed halves the snake, wasted at length 12, a lifesaver at 60. Hold it for when things get dangerously high, and to tee up your own pin afterwards.',
   },
   {
     h: 'King & Jack pass the danger',
@@ -35,7 +35,7 @@ const TACTICS: { h: string; p: string }[] = [
   },
   {
     h: 'Joker & Forfeit are gambles',
-    p: 'A Joker forces the next player to bin their hand and redraw — brutal on someone hoarding Queens, but random, so aim it. Forfeit is the same bet on yourself: swap a dead hand, but it costs your turn.',
+    p: 'A Joker forces the next player to bin their hand and redraw, brutal on someone hoarding Queens, but random, so aim it. Forfeit is the same bet on yourself: swap a dead hand, but it costs your turn.',
   },
 ];
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { Card } from '../../engine/types';
+import {computed} from 'vue';
+import type {Card} from '../../engine/types';
 
 const props = defineProps<{ card?: Card; faceDown?: boolean; dimmed?: boolean; tips?: boolean }>();
 
@@ -24,18 +24,18 @@ const name = computed(() => (props.card && props.card.kind !== 'food' ? TRICK_NA
 const isTrick = computed(() => !!props.card && props.card.kind !== 'food');
 
 const TRICK_DESC: Record<string, string> = {
-  K: 'King · Coil — reverses the direction of play.',
-  J: 'Jack · Slip — skips the next player.',
-  Q: "Queen · Shed — halves the snake's length, rounded down.",
-  A: 'Ace · Strike — wild 0–9; play it as 0 for a feint.',
-  JOKER: 'Joker · Scramble — the next player bins their hand and draws fresh.',
+  K: 'King · Coil, reverses the direction of play.',
+  J: 'Jack · Slip, skips the next player.',
+  Q: "Queen · Shed, halves the snake's length, rounded down.",
+  A: 'Ace · Strike, wild 0–9; play it as 0 for a feint.',
+  JOKER: 'Joker · Scramble, the next player bins their hand and draws fresh.',
 };
 
 // hover tooltip explaining what the card does (face-up cards only)
 const description = computed(() => {
   const c = props.card;
   if (!c || props.faceDown) return undefined;
-  return c.kind === 'food' ? `Food — feeds the snake ${c.value}.` : TRICK_DESC[c.kind];
+  return c.kind === 'food' ? `Food, feeds the snake ${c.value}.` : TRICK_DESC[c.kind];
 });
 </script>
 
@@ -95,7 +95,7 @@ const description = computed(() => {
 }
 
 .name {
-  font-family: var(--mono, monospace);
+  font-family: var(--mono, monospace), monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 8px;
@@ -103,7 +103,7 @@ const description = computed(() => {
   margin-top: 5px;
 }
 
-/* custom tooltip — instant, no transition, above the card; one per card so
+/* custom tooltip, instant, no transition, above the card; one per card so
    moving to the next card swaps it with zero flicker or delay. It lives outside
    `.face`, so a dimmed/disabled card still shows a fully-opaque tooltip. */
 .tip {

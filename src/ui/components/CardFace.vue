@@ -40,16 +40,18 @@ const description = computed(() => {
 </script>
 
 <template>
-  <div class="card" :class="{ down: faceDown, trick: isTrick }" :title="description">
+  <div class="card" :class="{ down: faceDown, trick: isTrick }">
     <template v-if="!faceDown">
       <div class="rank">{{ rank }}</div>
       <div v-if="name" class="name">{{ name }}</div>
     </template>
+    <span v-if="description" class="tip" role="tooltip">{{ description }}</span>
   </div>
 </template>
 
 <style scoped>
 .card {
+  position: relative;
   width: 46px;
   height: 66px;
   border: 1px solid var(--gold, #a87b2b);
@@ -63,6 +65,44 @@ const description = computed(() => {
   color: var(--ink, #211c16);
   box-shadow: 0 1px 0 rgb(168 123 43 / 25%);
   flex: none;
+}
+
+/* custom tooltip — instant, no transition, above the card; one per card so
+   moving to the next card swaps it with zero flicker or delay */
+.tip {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  width: max-content;
+  max-width: 200px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--cardback, #1b2a22);
+  color: var(--bone, #f4eee1);
+  border: 1px solid rgb(215 180 92 / 35%);
+  font-family: var(--body, Georgia, serif);
+  font-size: 12.5px;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 8px 20px -8px rgb(0 0 0 / 55%);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--cardback, #1b2a22);
+}
+
+.card:hover .tip {
+  visibility: visible;
 }
 
 .card.trick .rank {

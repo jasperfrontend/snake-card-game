@@ -22,10 +22,25 @@ const rank = computed(() => {
 
 const name = computed(() => (props.card && props.card.kind !== 'food' ? TRICK_NAMES[props.card.kind] : ''));
 const isTrick = computed(() => !!props.card && props.card.kind !== 'food');
+
+const TRICK_DESC: Record<string, string> = {
+  K: 'King · Coil — reverses the direction of play.',
+  J: 'Jack · Slip — skips the next player.',
+  Q: "Queen · Shed — halves the snake's length, rounded down.",
+  A: 'Ace · Strike — wild 0–9; play it as 0 for a feint.',
+  JOKER: 'Joker · Scramble — the next player bins their hand and draws fresh.',
+};
+
+// hover tooltip explaining what the card does (face-up cards only)
+const description = computed(() => {
+  const c = props.card;
+  if (!c || props.faceDown) return undefined;
+  return c.kind === 'food' ? `Food — feeds the snake ${c.value}.` : TRICK_DESC[c.kind];
+});
 </script>
 
 <template>
-  <div class="card" :class="{ down: faceDown, trick: isTrick }">
+  <div class="card" :class="{ down: faceDown, trick: isTrick }" :title="description">
     <template v-if="!faceDown">
       <div class="rank">{{ rank }}</div>
       <div v-if="name" class="name">{{ name }}</div>

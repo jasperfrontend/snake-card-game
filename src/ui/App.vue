@@ -6,11 +6,13 @@ import CardFace from './components/CardFace.vue';
 import SnakeRow from './components/SnakeRow.vue';
 import RulesModal from './components/RulesModal.vue';
 import SettingsModal from './components/SettingsModal.vue';
+import TacticsModal from './components/TacticsModal.vue';
 
 const game = useSnakeGame({ players: 3, interactiveStranded: true, maxPerPlayer: 23 });
 const selectedAce = ref<number | null>(null);
 const showRules = ref(false);
 const showSettings = ref(false);
+const showTactics = ref(false);
 
 onMounted(() => {
   if (game.loadSaved()) game.resume();
@@ -148,6 +150,7 @@ const turnInfo = computed(() => {
         </span>
         <button class="ghost" @click="showSettings = true">Settings</button>
         <button class="ghost" @click="showRules = true">Rules</button>
+        <button class="ghost" @click="showTactics = true">Tactics</button>
         <button class="primary" @click="start">New game</button>
       </div>
     </header>
@@ -173,6 +176,10 @@ const turnInfo = computed(() => {
         @new-game="settingsNewGame"
         @close="showSettings = false"
       />
+    </Transition>
+
+    <Transition name="fade">
+      <TacticsModal v-if="showTactics" @close="showTactics = false" />
     </Transition>
 
     <Transition name="turn">

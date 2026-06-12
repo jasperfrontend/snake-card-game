@@ -69,7 +69,7 @@ const description = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: var(--display, Georgia, serif);
+  font-family: var(--display), Georgia, serif;
   color: var(--ink, #211c16);
   box-shadow: 0 1px 0 rgb(168 123 43 / 25%);
   flex: none;
@@ -119,8 +119,8 @@ const description = computed(() => {
   background: var(--cardback, #1b2a22);
   color: var(--bone, #f4eee1);
   border: 1px solid rgb(215 180 92 / 35%);
-  font-family: var(--body, Georgia, serif);
-  font-size: 12.5px;
+  font-family: var(--body), Georgia, serif;
+  font-size: 13px;
   line-height: 1.35;
   text-align: center;
   box-shadow: 0 8px 20px -8px rgb(0 0 0 / 55%);

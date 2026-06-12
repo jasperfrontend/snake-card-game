@@ -1,5 +1,7 @@
 # Snake — single-player card game
 
+### ▶ Play now at **[avoidthebite.com](https://avoidthebite.com/)**
+
 A polished, fully client-side browser version of **Snake**, a push-your-luck card
 game, played against two bots. Built to read as a sibling of the printed rulebook
 (`reference/snake-rulebook.html`), with behaviour matched to the reference Monte-Carlo

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import type { Card } from '../../engine/types';
 
-const props = defineProps<{ card?: Card; faceDown?: boolean }>();
+const props = defineProps<{ card?: Card; faceDown?: boolean; dimmed?: boolean }>();
 
 const TRICK_NAMES: Record<string, string> = {
   K: 'Coil',
@@ -40,18 +40,26 @@ const description = computed(() => {
 </script>
 
 <template>
-  <div class="card" :class="{ down: faceDown, trick: isTrick }">
-    <template v-if="!faceDown">
-      <div class="rank">{{ rank }}</div>
-      <div v-if="name" class="name">{{ name }}</div>
-    </template>
+  <!-- wrap holds the positioning + hover; only `.face` dims, so the tooltip
+       stays fully opaque even when the card is disabled -->
+  <div class="cardwrap">
+    <div class="face card" :class="{ down: faceDown, trick: isTrick, dim: dimmed }">
+      <template v-if="!faceDown">
+        <div class="rank">{{ rank }}</div>
+        <div v-if="name" class="name">{{ name }}</div>
+      </template>
+    </div>
     <span v-if="description" class="tip" role="tooltip">{{ description }}</span>
   </div>
 </template>
 
 <style scoped>
-.card {
+.cardwrap {
   position: relative;
+  display: inline-flex;
+}
+
+.card {
   width: 46px;
   height: 66px;
   border: 1px solid var(--gold, #a87b2b);
@@ -67,8 +75,37 @@ const description = computed(() => {
   flex: none;
 }
 
+.card.dim {
+  opacity: 0.4;
+}
+
+.card.trick .rank {
+  color: var(--gold, #a87b2b);
+}
+
+.card.down {
+  background: linear-gradient(155deg, #24382c, #1b2a22);
+  border-color: rgb(215 180 92 / 30%);
+}
+
+.rank {
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.name {
+  font-family: var(--mono, monospace);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 8px;
+  color: var(--ink-soft, #5a4f40);
+  margin-top: 5px;
+}
+
 /* custom tooltip — instant, no transition, above the card; one per card so
-   moving to the next card swaps it with zero flicker or delay */
+   moving to the next card swaps it with zero flicker or delay. It lives outside
+   `.face`, so a dimmed/disabled card still shows a fully-opaque tooltip. */
 .tip {
   position: absolute;
   bottom: calc(100% + 9px);
@@ -101,31 +138,7 @@ const description = computed(() => {
   border-top-color: var(--cardback, #1b2a22);
 }
 
-.card:hover .tip {
+.cardwrap:hover .tip {
   visibility: visible;
-}
-
-.card.trick .rank {
-  color: var(--gold, #a87b2b);
-}
-
-.card.down {
-  background: linear-gradient(155deg, #24382c, #1b2a22);
-  border-color: rgb(215 180 92 / 30%);
-}
-
-.rank {
-  font-weight: 900;
-  font-size: 22px;
-  line-height: 1;
-}
-
-.name {
-  font-family: var(--mono, monospace);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 8px;
-  color: var(--ink-soft, #5a4f40);
-  margin-top: 5px;
 }
 </style>

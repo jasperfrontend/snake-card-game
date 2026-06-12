@@ -260,7 +260,7 @@ const turnInfo = computed(() => {
           @click="clickCard(i)"
         >
           <span v-if="c === game.strandedDrawn.value" class="drawn-tag">drawn</span>
-          <CardFace :card="c" />
+          <CardFace :card="c" :dimmed="!game.awaitingHuman.value || !game.legalIndices.value.has(i)" />
         </button>
 
         <button
@@ -805,6 +805,12 @@ button.ghost {
   transition:
     transform 0.15s ease,
     border-color 0.15s ease;
+}
+
+/* dimming a disabled card is done on the card face (CardFace), not the button,
+   so the tooltip stays fully opaque */
+.hand-card:disabled {
+  opacity: 1;
 }
 
 .hand-card.legal {

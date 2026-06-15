@@ -4,7 +4,16 @@
 
 import { mulberry32 } from './rng';
 import { playGame, type ChoosePolicy } from './rules';
-import { smartPolicy, botPolicy, configPolicy, seatedPolicy, NAIVE, DIFFICULTY } from '../bots/policy';
+import {
+  smartPolicy,
+  smartComboPolicy,
+  botPolicy,
+  botComboPolicy,
+  configPolicy,
+  seatedPolicy,
+  NAIVE,
+  DIFFICULTY,
+} from '../bots/policy';
 import type { Difficulty } from './types';
 
 const TRICK_ORDER = ['Q', 'K', 'J', 'A', 'JOKER'] as const;
@@ -19,6 +28,7 @@ export interface BatchStats {
   pinKind: Record<string, number>; // ace / food / Q
   trickTotal: Record<string, number>;
   loserSeat: number[]; // count per seat
+  combobusts: number; // total busted combo attempts (variant metric)
 }
 
 export function runBatch(
@@ -40,12 +50,14 @@ export function runBatch(
     pinKind: {},
     trickTotal: {},
     loserSeat: Array.from({ length: nPlayers }, () => 0),
+    combobusts: 0,
   };
 
   for (let g = 0; g < nGames; g++) {
-    const { loser, rounds, roundResults } = playGame(nPlayers, policy, rng, maxPerPlayer, handSize);
+    const { loser, rounds, roundResults, combobusts } = playGame(nPlayers, policy, rng, maxPerPlayer, handSize);
     stats.roundsPerGame.push(rounds);
     stats.loserSeat[loser]++;
+    stats.combobusts += combobusts;
     for (const r of roundResults) {
       stats.roundsPlayed++;
       stats.playsPerRound.push(r.plays);
@@ -169,6 +181,63 @@ export function phase2Report(): string {
   return out.join('\n');
 }
 
+// --------------------------------------------------- Step 2: combo-pin variant
+
+/** Win rate for a seat-0 human proxy vs two bots, at a given snake max. */
+function winRateVsBots(
+  human: ChoosePolicy,
+  botFor: (d: Difficulty) => ChoosePolicy,
+  d: Difficulty,
+  nGames: number,
+  seed: number,
+  maxPerPlayer: number,
+): number {
+  const rng = mulberry32(seed);
+  const policy = seatedPolicy([human, botFor(d), botFor(d)]);
+  let wins = 0;
+  for (let g = 0; g < nGames; g++) {
+    const { loser } = playGame(3, policy, rng, maxPerPlayer);
+    if (loser !== 0) wins++;
+  }
+  return wins / nGames;
+}
+
+export function comboReport(): string {
+  const out: string[] = [];
+  const GAMES = 400;
+  const MP = 23; // the app's snake max (23 × players)
+
+  out.push('\n===== STEP 2: COMBO-PIN VARIANT (3 players, 23×, 400 games) =====');
+  out.push('Same-difficulty table — classic vs combo: round endings + busts.');
+  out.push(
+    `${'bots'.padStart(8)} ${'variant'.padStart(8)} ${'bite%'.padStart(6)} ${'pin%'.padStart(6)} ${'busts/game'.padStart(11)}`,
+  );
+  for (const d of ['easy', 'medium', 'hard'] as const) {
+    for (const [tag, pol] of [
+      ['classic', botPolicy(d)],
+      ['combo', botComboPolicy(d)],
+    ] as const) {
+      const s = runBatch(3, GAMES, 1234, pol, MP);
+      const tot = s.roundsPlayed;
+      const bite = (100 * s.endings.bite) / tot;
+      const pin = (100 * s.endings.pin) / tot;
+      const bpg = s.combobusts / GAMES;
+      out.push(
+        `${d.padStart(8)} ${tag.padStart(8)} ${(bite.toFixed(0) + '%').padStart(6)} ${(pin.toFixed(0) + '%').padStart(6)} ${bpg.toFixed(2).padStart(11)}`,
+      );
+    }
+  }
+
+  out.push('\n----- sharp human win% vs two bots (perfect combos), classic vs combo, 23× -----');
+  out.push(`${'bots'.padStart(8)} ${'classic'.padStart(9)} ${'combo'.padStart(9)}`);
+  for (const d of ['hard', 'medium', 'easy'] as const) {
+    const base = winRateVsBots(smartPolicy, botPolicy, d, GAMES, 555, MP);
+    const combo = winRateVsBots(smartComboPolicy, botComboPolicy, d, GAMES, 555, MP);
+    out.push(`${d.padStart(8)} ${((100 * base).toFixed(0) + '%').padStart(9)} ${((100 * combo).toFixed(0) + '%').padStart(9)}`);
+  }
+  return out.join('\n');
+}
+
 // ------------------------------------------------------------------- entrypoint
 
 export function main(): void {
@@ -193,6 +262,7 @@ export function main(): void {
   }
 
   console.log(phase2Report());
+  console.log(comboReport());
 }
 
 // Invoked via the run-sim.ts wrapper (`npm run simulate`); see that file.

@@ -2,14 +2,16 @@
 // Pure TypeScript: no Vue, no DOM, no Math.random — all randomness is threaded
 // through a seeded Rng so games are reproducible.
 
-import type { Card, GameState, Kind, Move, Player, PinKind, RoundResult } from './types';
+import type { Card, ChosenAction, GameState, Kind, Player, PinKind, RoundResult } from './types';
+import { isComboMove } from './types';
 import { buildDeck } from './deck';
 import { mulberry32, randInt, shuffle, type Rng } from './rng';
 
 const PLAY_CAP = 4000; // safety valve; effectively never hit
 
-/** A policy decides the current player's move, or returns null when cornered. */
-export type ChoosePolicy = (state: GameState, rng: Rng) => Move | null;
+/** A policy decides the current player's action (a single play or a combo
+ *  attempt), or returns null when cornered. */
+export type ChoosePolicy = (state: GameState, rng: Rng) => ChosenAction | null;
 
 // ----------------------------------------------------------------- legal moves
 
@@ -400,7 +402,8 @@ export function stepTurn(state: GameState, choose: ChoosePolicy, rng: Rng): Game
     endBite(state, state.current);
     return state;
   }
-  executeMove(state, mv.cardIndex, mv.aceValue, rng);
+  if (isComboMove(mv)) executeCombo(state, mv.combo, rng);
+  else executeMove(state, mv.cardIndex, mv.aceValue, rng);
   return state;
 }
 
@@ -471,6 +474,7 @@ export interface GameOutcome {
   loser: number;
   rounds: number;
   roundResults: RoundResult[];
+  combobusts: number; // total busted combo attempts across the game (variant metric)
 }
 
 /**
@@ -496,6 +500,7 @@ export function playGame(
   let players: Player[] = Array.from({ length: n }, () => ({ hand: [], score: 0, isBot: true }));
   let dealer = randInt(rng, n);
   let rounds = 0;
+  let combobusts = 0;
   const roundResults: RoundResult[] = [];
 
   while (Math.max(...players.map((p) => p.score)) < 100 && rounds < 1000) {
@@ -503,12 +508,13 @@ export function playGame(
     const final = playRound(state, choose, rng);
     players = final.players;
     if (final.roundResult) roundResults.push(final.roundResult);
+    combobusts += final.events.filter((e) => e.type === 'combobust').length;
     rounds++;
     dealer = mod(dealer + 1, n);
   }
 
   const scores = players.map((p) => p.score);
-  return { scores, loser: pickLoser(scores, rng), rounds, roundResults };
+  return { scores, loser: pickLoser(scores, rng), rounds, roundResults, combobusts };
 }
 
 /** Convenience: a fresh seeded rng. */

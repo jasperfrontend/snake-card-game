@@ -7,7 +7,7 @@ import { biteRate, humanWinRate } from '../simulate';
 import { smartPolicy, botPolicy, configPolicy, NAIVE, botChooseMove } from '../../bots/policy';
 import { mulberry32 } from '../rng';
 import { startRound } from '../rules';
-import type { Player } from '../types';
+import { isComboMove, type Player } from '../types';
 
 describe('bite rate gradient (3 players)', () => {
   const GAMES = 200;
@@ -80,7 +80,7 @@ describe('botChooseMove', () => {
     const rng = mulberry32(77);
     const state = startRound(players(), 0, rng);
     const m = botChooseMove(state, 'easy', rng);
-    if (m !== null) {
+    if (m !== null && !isComboMove(m)) {
       expect(m.cardIndex).toBeGreaterThanOrEqual(0);
       expect(m.cardIndex).toBeLessThan(state.players[state.current].hand.length);
     }

@@ -16,6 +16,7 @@ import {
   type ChoosePolicy,
   drawCard,
   endBite,
+  executeCombo,
   executeMove,
   type LegalMove,
   legalMoves as computeLegalMoves,
@@ -24,6 +25,7 @@ import {
 } from '../../engine/rules';
 import { botChooseMove } from '../../bots/policy';
 import type { Card, Difficulty, GameEvent, GameState, Kind, Move, Player } from '../../engine/types';
+import { isComboMove } from '../../engine/types';
 import {
   clearSave,
   loadRecord,
@@ -368,7 +370,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
     if (prep.status !== 'awaiting') return; // stranded/bite already handled
     const mv = botChoose(state.value, rngBox.rng);
     if (mv === null) return; // beginTurn already covers the no-move bite
-    executeMove(state.value, mv.cardIndex, mv.aceValue, rngBox.rng);
+    if (isComboMove(mv)) executeCombo(state.value, mv.combo, rngBox.rng);
+    else executeMove(state.value, mv.cardIndex, mv.aceValue, rngBox.rng);
   }
 
   // -------------------------------------------------- stranded trick (human only)

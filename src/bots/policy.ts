@@ -11,8 +11,8 @@
 //
 // Lower difficulty => misses more pins and miscounts more => gets bitten more.
 
-import type { Card, Difficulty, GameState, Move } from '../engine/types';
-import { legalMoves, type ChoosePolicy, type LegalMove } from '../engine/rules';
+import type { Card, ChosenAction, Difficulty, GameState, Move } from '../engine/types';
+import { legalCombos, legalMoves, nearMissCombos, type ChoosePolicy, type LegalMove } from '../engine/rules';
 import type { Rng } from '../engine/rng';
 
 const DANGER = 9; // within this much of the top, switch from offence to survival
@@ -94,15 +94,24 @@ export const NAIVE: BotConfig = { pinAwareness: 0, mathError: 1 };
  * Difficulty-aware move choice. Returns the chosen move, or null on a forced
  * bite (no legal play exists at all).
  */
-export function botChooseMove(state: GameState, difficulty: Difficulty, rng: Rng): Move | null {
+export function botChooseMove(
+  state: GameState,
+  difficulty: Difficulty,
+  rng: Rng,
+  comboPin = false,
+): ChosenAction | null {
   const cfg = state.players[state.current].difficulty
     ? DIFFICULTY[state.players[state.current].difficulty as Difficulty]
     : DIFFICULTY[difficulty];
-  return chooseImperfect(state, cfg, rng);
+  return chooseImperfect(state, cfg, rng, comboPin);
 }
 
-/** Core imperfect chooser, parameterised directly by a BotConfig. */
-export function chooseImperfect(state: GameState, cfg: BotConfig, rng: Rng): Move | null {
+/**
+ * Core imperfect chooser, parameterised directly by a BotConfig. With `comboPin`
+ * off (the default) the rng sequence is identical to the classic chooser, so the
+ * oracle statistics are unaffected.
+ */
+export function chooseImperfect(state: GameState, cfg: BotConfig, rng: Rng, comboPin = false): ChosenAction | null {
   const hand = state.players[state.current].hand;
   const { length, maxLength: mx } = state;
   const moves = legalMoves(hand, length, mx);
@@ -111,6 +120,20 @@ export function chooseImperfect(state: GameState, cfg: BotConfig, rng: Rng): Mov
   // Pin awareness: a perfect player always pins; imperfect ones sometimes miss it.
   const pin = pinMove(moves, length, mx);
   if (pin && rng() < cfg.pinAwareness) return pin;
+
+  // Combo pin (variant): only when enabled and no single-card pin is on offer.
+  // The bot spots it with pinAwareness; on a math error it fumbles into a
+  // near-miss that busts — which is what gives a sharp human room on easy bots.
+  if (comboPin && !pin) {
+    const combos = legalCombos(hand, length, mx);
+    if (combos.length && rng() < cfg.pinAwareness) {
+      if (rng() < cfg.mathError) {
+        const miss = nearMissCombos(hand, length, mx, 1)[0];
+        if (miss) return { combo: miss }; // fumbled the maths → will bust
+      }
+      return { combo: combos[0] };
+    }
+  }
 
   // Math error: misjudge the remaining room and play as if safe (greedy).
   const miscount = rng() < cfg.mathError;
@@ -121,6 +144,28 @@ export function chooseImperfect(state: GameState, cfg: BotConfig, rng: Rng): Mov
 export function botPolicy(difficulty: Difficulty): ChoosePolicy {
   return (state: GameState, rng: Rng) => chooseImperfect(state, DIFFICULTY[difficulty], rng);
 }
+
+/** Combo-aware ChoosePolicy for a fixed difficulty (the skill variant). */
+export function botComboPolicy(difficulty: Difficulty): ChoosePolicy {
+  return (state: GameState, rng: Rng) => chooseImperfect(state, DIFFICULTY[difficulty], rng, true);
+}
+
+/**
+ * A perfect combo player (a sharp-human proxy): take a single-card pin, else an
+ * exact multi-card pin, else play defensively. Never busts — it only commits to a
+ * combo that lands. Used to measure the skill ceiling the variant unlocks.
+ */
+export function smartComboChoose(hand: Card[], length: number, mx: number): ChosenAction | null {
+  const moves = legalMoves(hand, length, mx);
+  if (moves.length === 0) return null;
+  const pin = pinMove(moves, length, mx);
+  if (pin) return pin;
+  const combos = legalCombos(hand, length, mx);
+  if (combos.length) return { combo: combos[0] };
+  return nonPinMove(moves, length, mx);
+}
+export const smartComboPolicy: ChoosePolicy = (state: GameState) =>
+  smartComboChoose(state.players[state.current].hand, state.length, state.maxLength);
 
 /** Build a ChoosePolicy from an explicit config (for the naive baseline / tuning). */
 export function configPolicy(cfg: BotConfig): ChoosePolicy {

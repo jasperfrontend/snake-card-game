@@ -11,7 +11,6 @@
 import { computed, ref, type Ref } from 'vue';
 import { randInt, rngFromState } from '../../engine/rng';
 import {
-  advanceTurn,
   beginTurn,
   type ChoosePolicy,
   comboBust,
@@ -19,6 +18,7 @@ import {
   drawCard,
   endBite,
   executeCombo,
+  executeForfeit,
   executeMove,
   finishTurn,
   type LegalMove,
@@ -174,11 +174,11 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const pinCounts = ref<number[]>(Array.from({ length: n }, () => 0));
   const biteCounts = ref<number[]>(Array.from({ length: n }, () => 0));
 
-  // forfeit: bin the hand for a new one. Once per hand-cycle (resets when the
-  // human's hand refills to full or a new round deals), so it's a mulligan, not
-  // an every-turn stall. Normally a full fresh hand only; the forfeit-at-one
-  // variant also unlocks it on your last card, as an escape from the corner.
-  const forfeitUsed = ref(false);
+  // forfeit: bin the hand for a new one. Once per hand-cycle PER SEAT (resets when
+  // a seat's hand refills to full or a new round deals), so it's a mulligan, not an
+  // every-turn stall. The human gets a full-hand mulligan plus, under forfeit-at-
+  // one, a last-card rescue; the bots get that same last-card rescue (see stepBot).
+  const forfeitUsed = ref<boolean[]>(Array.from({ length: n }, () => false));
 
   // combo pin (human, interactive): an in-progress multi-card attempt this turn.
   // comboLaid is how many cards have been laid; 2+ commits you to a pin or a bust.
@@ -220,8 +220,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
       log.value.push(describe(e));
       applyToSnake(e);
       if (BEAT_TYPES.has(e.type)) beat.value = { id: ++beatId, type: e.type, by: e.by };
-      // a fresh full hand (refill) re-arms the human's mulligan
-      if (e.type === 'refill' && e.by === humanSeat) forfeitUsed.value = false;
+      // a fresh full hand (refill) re-arms that seat's mulligan (human or bot)
+      if (e.type === 'refill') forfeitUsed.value[e.by] = false;
     }
     state.value.events = [];
   }
@@ -327,6 +327,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     loser.value = null;
     pinCounts.value = saved.pins ?? Array.from({ length: n }, () => 0);
     biteCounts.value = saved.bites ?? Array.from({ length: n }, () => 0);
+    forfeitUsed.value = Array.from({ length: n }, () => false);
     cancelCombo();
     finishStranded();
     segId = saved.snake.reduce((m, s) => Math.max(m, s.id), 0);
@@ -360,7 +361,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
           // available, surface the turn instead (play it if legal, or forfeit).
           // Count the turn here exactly as beginTurn would, then wait for the
           // human to resolve it via play() or forfeitHand().
-          if (forfeitAtOne.value && hand.length === 1 && !forfeitUsed.value) {
+          if (forfeitAtOne.value && hand.length === 1 && !forfeitUsed.value[humanSeat]) {
             state.value.roundMeta.plays++;
             legalMoves.value = computeLegalMoves(hand, state.value.length, state.value.maxLength);
             awaitingHuman.value = true;
@@ -393,6 +394,24 @@ export function useSnakeGame(opts: GameOptions = {}) {
   }
 
   function stepBot(): void {
+    const cur = state.value.current;
+    const hand = state.value.players[cur].hand;
+    // bots get the same forfeit the human has: with a full hand (handSize) or a
+    // lone card that has no legal play (all food, so not a stranded trick), dodge
+    // the bite for a fresh hand instead. Same eligibility (4 or 1 cards), same
+    // once-per-cycle gate. Counts the turn here since we skip beginTurn.
+    if (
+      forfeitAtOne.value &&
+      !forfeitUsed.value[cur] &&
+      (hand.length === handSize.value || hand.length === 1) &&
+      hand.every((c) => c.kind === 'food') &&
+      computeLegalMoves(hand, state.value.length, state.value.maxLength).length === 0
+    ) {
+      state.value.roundMeta.plays++;
+      forfeitUsed.value[cur] = true;
+      executeForfeit(state.value, rngBox.rng);
+      return;
+    }
     const prep = beginTurn(state.value, rngBox.rng);
     if (prep.status !== 'awaiting') return; // stranded/bite already handled
     const mv = botChoose(state.value, rngBox.rng);
@@ -534,7 +553,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     beat.value = null;
     pinCounts.value = Array.from({ length: n }, () => 0);
     biteCounts.value = Array.from({ length: n }, () => 0);
-    forfeitUsed.value = false;
+    forfeitUsed.value = Array.from({ length: n }, () => false);
     cancelCombo();
     finishStranded();
     clearSave();
@@ -633,7 +652,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
    * escape). Either way it's gated to once per hand-cycle.
    */
   const canForfeit = computed(() => {
-    if (!awaitingHuman.value || forfeitUsed.value || comboActive.value) return false;
+    if (!awaitingHuman.value || forfeitUsed.value[humanSeat] || comboActive.value) return false;
     const len = state.value.players[humanSeat].hand.length;
     return len === handSize.value || (forfeitAtOne.value && len === 1);
   });
@@ -641,21 +660,10 @@ export function useSnakeGame(opts: GameOptions = {}) {
   /** Forfeit the whole hand for a fresh one; this spends your turn (a chosen Joker). */
   async function forfeitHand(): Promise<void> {
     if (!canForfeit.value) return;
-    const cur = state.value.current;
-    const hand = state.value.players[cur].hand;
     awaitingHuman.value = false;
     legalMoves.value = [];
-    forfeitUsed.value = true;
-
-    state.value.discardPile.push(...hand);
-    const fresh: Card[] = [];
-    for (let k = 0; k < handSize.value; k++) {
-      const d = drawCard(state.value, rngBox.rng);
-      if (d) fresh.push(d);
-    }
-    state.value.players[cur].hand = fresh;
-    state.value.events.push({ type: 'forfeit', by: cur });
-    advanceTurn(state.value); // forfeiting costs your play this round
+    forfeitUsed.value[state.value.current] = true;
+    executeForfeit(state.value, rngBox.rng); // discard, redraw, spend the turn
     flushEvents();
     await run();
   }
@@ -667,7 +675,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     awaitingHuman.value = false;
     legalMoves.value = [];
     beat.value = null;
-    forfeitUsed.value = false;
+    forfeitUsed.value = Array.from({ length: n }, () => false);
     cancelCombo();
     finishStranded();
     flushEvents();

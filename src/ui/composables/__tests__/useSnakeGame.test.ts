@@ -128,6 +128,35 @@ describe('useSnakeGame — full game', () => {
     expect(off.state.value.roundResult?.who).toBe(0);
   });
 
+  it('bots get the same rescue: a cornered bot forfeits instead of being bitten', async () => {
+    const g = useSnakeGame({ players: 2, seed: 9, botDelayMs: 0, forfeitAtOne: true });
+    await g.newGame();
+    const s = g.state.value;
+    s.current = 1; // a bot's turn (seat 1 = Bot A)
+    s.phase = 'playing';
+    s.length = s.maxLength - 1; // gap of 1
+    s.players[1].hand = [{ kind: 'food', value: 5 }] as Card[]; // overshoots, cornered
+    s.players[1].score = 0;
+    g.awaitingHuman.value = false;
+    await g.resume();
+
+    // the bot dodged the bite for a fresh hand, and the round carried on
+    expect(g.biteCounts.value[1]).toBe(0);
+    expect(g.log.value.some((l) => l.includes('Bot A forfeit'))).toBe(true);
+
+    // with the variant off, the same cornered bot is bitten instead
+    const off = useSnakeGame({ players: 2, seed: 9, botDelayMs: 0, forfeitAtOne: false });
+    await off.newGame();
+    const o = off.state.value;
+    o.current = 1;
+    o.phase = 'playing';
+    o.length = o.maxLength - 1;
+    o.players[1].hand = [{ kind: 'food', value: 5 }] as Card[];
+    off.awaitingHuman.value = false;
+    await off.resume();
+    expect(off.log.value.some((l) => l.includes('Bot A forfeit'))).toBe(false);
+  });
+
   describe('human combo pin', () => {
     const food = (v: number): Card => ({ kind: 'food', value: v });
 

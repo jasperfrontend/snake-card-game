@@ -315,6 +315,26 @@ export function executeCombo(state: GameState, indices: number[], rng: Rng): { p
   return { pinned: false };
 }
 
+/**
+ * Forfeit the current player's hand: discard it, redraw a full hand, and pass the
+ * turn on. The turn is spent and the snake is not fed. MUTATES state. Shared by
+ * the human's mulligan and the bots' corner rescue; the once-per-cycle gating and
+ * turn-counting are the caller's job.
+ */
+export function executeForfeit(state: GameState, rng: Rng): void {
+  const cur = state.current;
+  const hand = state.players[cur].hand;
+  state.discardPile.push(...hand);
+  const fresh: Card[] = [];
+  for (let k = 0; k < state.handSize; k++) {
+    const d = drawCard(state, rng);
+    if (d) fresh.push(d);
+  }
+  state.players[cur].hand = fresh;
+  state.events.push({ type: 'forfeit', by: cur });
+  advanceTurn(state);
+}
+
 /** End the round on a bite: the cornered player takes 10 points. MUTATES state. */
 export function endBite(state: GameState, who: number): void {
   state.players[who].score += 10;

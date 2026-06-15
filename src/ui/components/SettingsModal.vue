@@ -133,17 +133,17 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
 
       <div class="row">
         <div class="row-head">
-          <span class="r-label">Last-card rescue</span>
+          <span class="r-label">Forfeit when you have</span>
           <span class="r-tag live">live</span>
         </div>
-        <div class="seg" role="group" aria-label="Forfeit on your last card">
+        <div class="seg" role="group" aria-label="When you can bin your hand for a fresh one">
           <button class="seg-btn" :class="{ on: forfeitAtOne }" @click="emit('update:forfeitAtOne', true)">
-            <span class="s-main">On</span>
-            <span class="s-hint">escape the corner</span>
+            <span class="s-main">1 or {{ handSize }} cards</span>
+            <span class="s-hint">dump a dead last card</span>
           </button>
           <button class="seg-btn" :class="{ on: !forfeitAtOne }" @click="emit('update:forfeitAtOne', false)">
-            <span class="s-main">Off</span>
-            <span class="s-hint">classic</span>
+            <span class="s-main">{{ handSize }} cards only</span>
+            <span class="s-hint">full hand only</span>
           </button>
         </div>
       </div>

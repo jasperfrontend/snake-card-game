@@ -17,6 +17,21 @@ export interface Move {
   aceValue?: number;
 }
 
+/**
+ * A multi-card pin attempt (skill variant): 2–3 FOOD card indices laid in order,
+ * meant to land the snake exactly on max. Missing it busts. See SPEC-skill-variants.
+ */
+export interface ComboMove {
+  combo: number[];
+}
+
+/** A bot/human chosen action: a single play or a combo attempt. */
+export type ChosenAction = Move | ComboMove;
+
+export function isComboMove(a: ChosenAction): a is ComboMove {
+  return (a as ComboMove).combo !== undefined;
+}
+
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export interface Player {
@@ -36,6 +51,7 @@ export type GameEventType =
   | 'slip' // Jack skipped
   | 'scramble' // Joker rerolled a hand
   | 'forfeit' // a player binned their own full hand for a fresh one
+  | 'combobust' // a multi-card pin attempt missed (variant): penalty, play continues
   | 'refill' // an emptied hand drew back to 4
   | 'reshuffle' // discard recycled into the draw pile
   | 'startLength'; // round seeded its starting length

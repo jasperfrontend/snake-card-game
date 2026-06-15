@@ -172,23 +172,34 @@ export function executeMove(state: GameState, idx: number, aceVal: number | unde
 
   // --- pin? land exactly on max ---
   if (state.length === state.maxLength) {
-    for (let j = 0; j < n; j++) {
-      if (j !== cur) state.players[j].score += 5;
-    }
     const pinKind: PinKind = card.kind === 'A' ? 'ace' : card.kind === 'food' ? 'food' : 'Q';
-    state.events.push({ type: 'pin', by: cur, payload: { pinKind } });
-    state.phase = 'roundEnd';
-    state.roundResult = {
-      ending: 'pin',
-      who: cur,
-      plays: state.roundMeta.plays,
-      pinKind,
-      trickCounts: state.roundMeta.trickCounts,
-    };
+    resolvePin(state, cur, pinKind);
     return { kind: card.kind, feed, pinned: true };
   }
 
-  // --- refill an emptied hand (only a food card can be your last play) ---
+  // --- refill an emptied hand (only a food card can be your last play), advance ---
+  finishTurn(state, cur, rng);
+  return { kind: card.kind, feed, pinned: false };
+}
+
+/** Award the pin: everyone else takes 5, the round ends. MUTATES state. */
+function resolvePin(state: GameState, cur: number, pinKind: PinKind): void {
+  const n = state.players.length;
+  for (let j = 0; j < n; j++) if (j !== cur) state.players[j].score += 5;
+  state.events.push({ type: 'pin', by: cur, payload: { pinKind } });
+  state.phase = 'roundEnd';
+  state.roundResult = {
+    ending: 'pin',
+    who: cur,
+    plays: state.roundMeta.plays,
+    pinKind,
+    trickCounts: state.roundMeta.trickCounts,
+  };
+}
+
+/** The normal tail of a non-pinning play: refill an emptied hand, advance a seat. */
+function finishTurn(state: GameState, cur: number, rng: Rng): void {
+  const hand = state.players[cur].hand;
   if (hand.length === 0) {
     for (let k = 0; k < state.handSize; k++) {
       const d = drawCard(state, rng);
@@ -196,9 +207,109 @@ export function executeMove(state: GameState, idx: number, aceVal: number | unde
     }
     if (hand.length > 0) state.events.push({ type: 'refill', by: cur });
   }
-
   advanceTurn(state);
-  return { kind: card.kind, feed, pinned: false };
+}
+
+// --------------------------------------------------------------- combo pins (variant)
+// A skill variant (off by the engine's defaults so the oracle tests are intact):
+// lay 2–3 FOOD cards in one turn to land the snake EXACTLY on max. Overshoot is
+// never allowed, so a miss is always an undershoot. A miss BUSTS — the laid cards
+// stay on the snake, the player takes 10 (a 2-card try) or 20 (a 3-card try), and
+// play PASSES ON (a bust never ends the round). See SPEC-skill-variants.md.
+
+/** FOOD-only multi-card sets in `hand` (2..3 cards) whose values sum to `target`.
+ *  Returns arrays of hand indices. Pure: used by the bot policy and combo tooling. */
+function combosSumming(hand: Card[], target: number, lo = 2, hi = 3): number[][] {
+  if (target <= 0) return [];
+  const foods: { i: number; v: number }[] = [];
+  for (let i = 0; i < hand.length; i++) {
+    const c = hand[i];
+    if (c.kind === 'food' && (c.value as number) <= target) foods.push({ i, v: c.value as number });
+  }
+  const out: number[][] = [];
+  const m = foods.length;
+  for (let a = 0; a < m; a++) {
+    for (let b = a + 1; b < m; b++) {
+      if (hi >= 2 && lo <= 2 && foods[a].v + foods[b].v === target) out.push([foods[a].i, foods[b].i]);
+      if (hi >= 3) {
+        for (let c = b + 1; c < m; c++) {
+          if (foods[a].v + foods[b].v + foods[c].v === target) out.push([foods[a].i, foods[b].i, foods[c].i]);
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/** Exact 2–3 card pins for the remaining gap (mx - length). */
+export function legalCombos(hand: Card[], length: number, mx: number): number[][] {
+  return combosSumming(hand, mx - length, 2, 3);
+}
+
+/** Combos that undershoot the gap by `by` — a bot's believable miscount, which busts. */
+export function nearMissCombos(hand: Card[], length: number, mx: number, by = 1): number[][] {
+  return combosSumming(hand, mx - length - by, 2, 3);
+}
+
+/**
+ * Lay one FOOD card mid-combo: feed the snake and emit a play event, resolving a
+ * pin if it lands exactly. Does NOT refill or advance. The caller guarantees the
+ * card at `idx` is food and fits (length + value <= max). MUTATES state.
+ */
+export function comboFeed(state: GameState, idx: number): { pinned: boolean } {
+  const cur = state.current;
+  const hand = state.players[cur].hand;
+  const card = hand.splice(idx, 1)[0];
+  const v = card.value as number;
+  state.discardPile.push(card);
+  state.length += v;
+  state.events.push({ type: 'play', by: cur, payload: { kind: 'food', feed: v, length: state.length } });
+  if (state.length === state.maxLength) {
+    resolvePin(state, cur, 'food');
+    return { pinned: true };
+  }
+  return { pinned: false };
+}
+
+/**
+ * Resolve a busted combo: the `laid` cards already fed the snake and stay there;
+ * the current player takes 10 (laid 2) or 20 (laid 3), redraws to a full hand, and
+ * play PASSES ON. A bust never ends the round. MUTATES state.
+ */
+export function comboBust(state: GameState, laid: number, rng: Rng): void {
+  const cur = state.current;
+  const penalty = laid >= 3 ? 20 : 10;
+  state.players[cur].score += penalty;
+  state.events.push({ type: 'combobust', by: cur, payload: { laid, penalty, length: state.length } });
+  const hand = state.players[cur].hand;
+  while (hand.length < state.handSize) {
+    const d = drawCard(state, rng);
+    if (!d) break;
+    hand.push(d);
+  }
+  advanceTurn(state);
+}
+
+/**
+ * Atomic multi-card pin attempt (used by bots): lay `indices` (2–3 food cards) in
+ * order, stopping at a pin. If it doesn't land exactly, it busts. MUTATES state.
+ */
+export function executeCombo(state: GameState, indices: number[], rng: Rng): { pinned: boolean } {
+  const cur = state.current;
+  const hand = state.players[cur].hand;
+  const cards = indices.map((i) => hand[i]); // pin to identities; positions shift as we splice
+  let laid = 0;
+  for (const card of cards) {
+    const v = card.value as number;
+    if (state.length + v > state.maxLength) break; // would overshoot: cannot place
+    const pos = hand.indexOf(card);
+    if (pos < 0) break;
+    const res = comboFeed(state, pos);
+    laid++;
+    if (res.pinned) return { pinned: true };
+  }
+  comboBust(state, laid, rng);
+  return { pinned: false };
 }
 
 /** End the round on a bite: the cornered player takes 10 points. MUTATES state. */

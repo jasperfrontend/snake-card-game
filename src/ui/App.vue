@@ -123,20 +123,32 @@ const standings = computed(() =>
     .join('  ·  '),
 );
 
-// who's playing right now, a loud, central indicator
-const turnInfo = computed(() => {
-  if (game.gameOver.value || game.roundResult.value) return null;
+// the pin goal, folded into the status footer on your turn. The gap number is a
+// learning aid early; past ~60% of max you do the subtraction yourself.
+const goalText = computed(() => {
+  const len = game.length.value;
+  const max = game.maxLength.value;
+  const room = max - len;
+  if (room <= 0) return `land on ${max} to pin`;
+  return len <= max * 0.6 ? `land on ${max} (${room} to go)` : `land on ${max} to pin`;
+});
+
+// One status line for the whole table, shown in the fixed footer. Priority:
+// round/game over and combo attempts have their own UI, so the footer steps
+// aside; otherwise it's the stranded prompt, your turn (with the goal), or who's
+// playing. This replaces the old turn banner, the snake hint, the stranded
+// banner, and the hand's waiting text — none of which were needed at once.
+const status = computed(() => {
+  if (game.gameOver.value || game.roundResult.value) return null; // the round/over banner takes over
+  if (game.comboActive.value) return null; // the combo bar is the active prompt
+  if (game.strandedNote.value) return { you: true, text: game.strandedNote.value };
   const cur = game.current.value;
-  const you = cur === humanSeat;
-  return {
-    you,
-    seat: cur,
-    text: you
-      ? game.awaitingHuman.value
-        ? 'Your turn: play a card'
-        : 'Your turn'
-      : `${game.playerName(cur)} is playing…`,
-  };
+  if (cur === humanSeat) {
+    if (!game.awaitingHuman.value) return { you: true, text: 'Your turn' };
+    return { you: true, text: `Your turn — ${goalText.value}` };
+  }
+  const thinking = game.thinkingSeat.value === cur;
+  return { you: false, text: `${game.playerName(cur)} is ${thinking ? 'thinking' : 'playing'}…` };
 });
 </script>
 
@@ -217,13 +229,6 @@ const turnInfo = computed(() => {
       <TacticsModal v-if="showTactics" @close="showTactics = false" />
     </Transition>
 
-    <Transition name="turn">
-      <div v-if="turnInfo" class="turnbar" :class="{ you: turnInfo.you }" aria-live="polite">
-        <span class="pip"></span>
-        <span class="txt">{{ turnInfo.text }}</span>
-      </div>
-    </Transition>
-
     <SnakeRow
       :segments="game.snake.value"
       :length="game.length.value"
@@ -271,13 +276,6 @@ const turnInfo = computed(() => {
       <span class="head"></span>
       <span class="tag">play order</span>
     </div>
-
-    <Transition name="pop">
-      <section v-if="game.strandedNote.value" class="stranded">
-        <p class="eyebrow">Stuck with a trick</p>
-        <p class="s-note">{{ game.strandedNote.value }}</p>
-      </section>
-    </Transition>
 
     <section class="hand-wrap">
       <p class="eyebrow">Your hand</p>
@@ -342,24 +340,6 @@ const turnInfo = computed(() => {
           {{ v === 0 ? 'feint · 0' : v }}
         </button>
       </div>
-
-      <p
-        v-else-if="
-          !game.awaitingHuman.value && !game.gameOver.value && !game.roundResult.value && !game.strandedNote.value
-        "
-        class="waiting"
-      >
-        <span v-if="game.thinkingSeat.value !== null">{{ game.playerName(game.thinkingSeat.value) }} is thinking…</span>
-        <span v-else>Watching the table…</span>
-      </p>
-      <p
-        v-else-if="
-          game.awaitingHuman.value && selectedAce === null && !game.strandedNote.value && !game.comboActive.value
-        "
-        class="waiting your-turn"
-      >
-        Your turn. Play a glowing card.
-      </p>
     </section>
 
     <section
@@ -414,6 +394,14 @@ const turnInfo = computed(() => {
         <li v-for="(line, i) in game.log.value.slice(-16).reverse()" :key="i">{{ line }}</li>
       </ul>
     </details>
+
+    <!-- one fixed status line for the whole table; the page scrolls behind it -->
+    <Transition name="statusbar">
+      <div v-if="status" class="statusbar" :class="{ you: status.you }" role="status" aria-live="polite">
+        <span class="pip"></span>
+        <span class="txt">{{ status.text }}</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -421,7 +409,9 @@ const turnInfo = computed(() => {
 .wrap {
   max-width: 760px;
   margin: 0 auto;
-  padding: 22px 18px 64px;
+
+  /* roomy bottom padding so content clears the fixed status footer */
+  padding: 22px 18px 84px;
 }
 
 .bar {
@@ -538,41 +528,49 @@ button.ghost {
   opacity: 0;
 }
 
-/* ---- whose turn: a loud, central indicator ---- */
-.turnbar {
-  margin: 18px auto 0;
-  max-width: max-content;
+/* ---- the table's one status line, fixed to the foot of the screen ---- */
+.statusbar {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  max-width: min(92vw, 540px);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  padding: 8px 18px;
+  padding: 9px 18px;
   border-radius: 999px;
   font-family: var(--mono), monospace;
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 0.04em;
+  text-align: center;
   background: var(--cardback);
   color: var(--bone);
   border: 1px solid rgb(215 180 92 / 35%);
-  box-shadow: 0 10px 24px -16px rgb(0 0 0 / 60%);
+  box-shadow: 0 12px 30px -12px rgb(0 0 0 / 55%);
+  pointer-events: none;
 }
 
-.turnbar.you {
+.statusbar.you {
   background: var(--gold);
   color: var(--cardback);
   border-color: var(--gold-bright);
   font-weight: 700;
 }
 
-.turnbar .pip {
-  width: 10px;
-  height: 10px;
+.statusbar .pip {
+  flex: none;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--gold-bright);
   box-shadow: 0 0 0 0 rgb(215 180 92 / 70%);
   animation: pip 1.4s ease-out infinite;
 }
 
-.turnbar.you .pip {
+.statusbar.you .pip {
   background: var(--cardback);
   box-shadow: 0 0 0 0 rgb(27 42 34 / 60%);
   animation-name: pip-dark;
@@ -598,17 +596,17 @@ button.ghost {
   }
 }
 
-.turn-enter-active,
-.turn-leave-active {
+.statusbar-enter-active,
+.statusbar-leave-active {
   transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
-.turn-enter-from,
-.turn-leave-to {
+.statusbar-enter-from,
+.statusbar-leave-to {
   opacity: 0;
-  transform: translateY(-6px);
+  transform: translate(-50%, 14px);
 }
 
 .seats {
@@ -1008,24 +1006,6 @@ button.forfeit:hover {
   font-size: 12px;
 }
 
-/* ---- stranded trick: a clear, paced moment, then the normal hand ---- */
-.stranded {
-  margin-top: 24px;
-  padding: 14px 18px 16px;
-  border: 1.5px solid var(--gold-bright);
-  border-radius: 12px;
-  background: linear-gradient(160deg, #fbf3df, #f3e7c9);
-  text-align: center;
-  box-shadow: 0 14px 30px -18px rgb(168 123 43 / 70%);
-}
-
-.stranded .s-note {
-  font-family: var(--body), serif;
-  font-size: 17px;
-  color: var(--ink);
-  margin: 2px 0 0;
-}
-
 /* the freshly drawn card, highlighted in your hand */
 .hand-card.just-drawn {
   animation: dealin 0.35s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1054,17 +1034,6 @@ button.forfeit:hover {
     opacity: 0;
     transform: translateY(-14px) rotate(-4deg) scale(0.85);
   }
-}
-
-.waiting {
-  font-family: var(--mono), monospace;
-  font-size: 12px;
-  color: var(--ink-soft);
-  margin-top: 14px;
-}
-
-.your-turn {
-  color: var(--gold);
 }
 
 .banner {
@@ -1333,7 +1302,13 @@ button.forfeit:hover {
 
 @media (width <= 620px) {
   .wrap {
-    padding: 14px 12px 48px;
+    padding: 14px 12px 76px;
+  }
+
+  .statusbar {
+    bottom: 10px;
+    padding: 8px 14px;
+    font-size: 12px;
   }
 
   .bar {

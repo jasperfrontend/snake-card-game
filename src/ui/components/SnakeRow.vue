@@ -11,16 +11,6 @@ const props = defineProps<{
 
 const pct = computed(() => Math.min(100, (props.length / props.maxLength) * 100));
 const room = computed(() => props.maxLength - props.length);
-
-// The gap to the max is a learning aid early on, but once the snake is high
-// (past ~60% of max — where pins and combos actually happen) it's spelled out
-// for you, which is the combo-pin skill. So drop the number there and let the
-// visible length/max do the talking. See SPEC-skill-variants.md.
-const hint = computed(() => {
-  if (room.value <= 0) return 'pinned';
-  const goal = `Land exactly on ${props.maxLength} to pin`;
-  return props.length <= props.maxLength * 0.6 ? `${room.value} to the max. ${goal}` : goal;
-});
 </script>
 
 <template>
@@ -54,7 +44,6 @@ const hint = computed(() => {
         </div>
       </TransitionGroup>
     </div>
-    <p class="hint">{{ hint }}</p>
   </section>
 </template>
 
@@ -160,12 +149,6 @@ const hint = computed(() => {
 .seg.head {
   transform: translateY(-3px);
   box-shadow: 0 6px 14px -8px rgb(33 28 22 / 60%);
-}
-
-.hint {
-  font-size: 13px;
-  color: var(--ink-soft);
-  margin: 12px 0 0;
 }
 
 .seg-enter-active {

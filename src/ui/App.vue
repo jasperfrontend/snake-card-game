@@ -38,9 +38,13 @@ function settingsNewGame() {
 
 const humanSeat = game.humanSeat;
 
-function clickCard(i: number) {
+function clickCard(i: number, e?: Event) {
+  // drop focus from the tapped card so no lift/focus state clings to the card
+  // that slides into this slot after the play
+  const blur = () => (e?.currentTarget as HTMLElement | null)?.blur();
   // mid-attempt, a click lays the card into the combo (food only, hidden sum)
   if (game.comboActive.value) {
+    blur();
     game.layCombo(i);
     return;
   }
@@ -51,6 +55,7 @@ function clickCard(i: number) {
     return;
   }
   selectedAce.value = null;
+  blur();
   game.play({ cardIndex: i });
 }
 
@@ -229,12 +234,7 @@ const status = computed(() => {
       <TacticsModal v-if="showTactics" @close="showTactics = false" />
     </Transition>
 
-    <SnakeRow
-      :segments="game.snake.value"
-      :length="game.length.value"
-      :max-length="game.maxLength.value"
-      :direction="game.direction.value"
-    />
+    <SnakeRow :segments="game.snake.value" :length="game.length.value" :max-length="game.maxLength.value" />
 
     <section class="seats">
       <div
@@ -290,7 +290,7 @@ const status = computed(() => {
             'just-drawn': c === game.strandedDrawn.value,
           }"
           :disabled="!handEnabled(i)"
-          @click="clickCard(i)"
+          @click="clickCard(i, $event)"
         >
           <span v-if="c === game.strandedDrawn.value" class="drawn-tag">drawn</span>
           <CardFace :card="c" :dimmed="!handEnabled(i)" :tips="game.tooltips.value" />
@@ -945,7 +945,16 @@ button.forfeit:hover {
   border-color: var(--gold);
 }
 
-.hand-card.legal:hover {
+/* lift on hover (desktop only — touch :hover sticks and would cling to the card
+   that takes this slot after a play) and momentarily while pressed (:active
+   releases on touchend, so it never sticks) */
+@media (hover: hover) {
+  .hand-card.legal:hover {
+    transform: translateY(-5px);
+  }
+}
+
+.hand-card.legal:active {
   transform: translateY(-5px);
 }
 
@@ -958,11 +967,17 @@ button.forfeit:hover {
 .ace-picker {
   margin-top: 14px;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
   align-items: center;
   font-family: var(--mono), monospace;
   font-size: 12px;
+}
+
+.ace-picker button {
+  min-width: 42px;
+  padding: 9px 12px;
+  font-size: 14px;
 }
 
 /* the freshly drawn card, highlighted in your hand */
@@ -1356,6 +1371,18 @@ button.forfeit:hover {
   /* centre the hand so it's easier to reach one-handed */
   .hand {
     justify-content: center;
+  }
+
+  /* fat, well-spaced Ace-value targets for thumbs */
+  .ace-picker {
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .ace-picker button {
+    min-width: 52px;
+    padding: 12px 14px;
+    font-size: 16px;
   }
 
   /* the round/over banner's action button goes full width and a touch bigger */

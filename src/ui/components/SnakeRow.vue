@@ -6,7 +6,6 @@ const props = defineProps<{
   segments: SnakeSegment[];
   length: number;
   maxLength: number;
-  direction: 1 | -1;
 }>();
 
 const pct = computed(() => Math.min(100, (props.length / props.maxLength) * 100));
@@ -18,9 +17,6 @@ const room = computed(() => props.maxLength - props.length);
     <div class="readout">
       <span class="len">{{ length }}</span>
       <span class="max">/ {{ maxLength }}</span>
-      <span class="dir" :title="direction === 1 ? 'play goes left' : 'play reversed'">
-        {{ direction === 1 ? '↻' : '↺' }}
-      </span>
     </div>
 
     <div class="track" role="img" :aria-label="`${length} of ${maxLength}, ${room} to go`">
@@ -70,11 +66,6 @@ const room = computed(() => props.maxLength - props.length);
 .max {
   font-size: 22px;
   color: var(--ink-soft);
-}
-
-.dir {
-  font-size: 26px;
-  color: var(--gold);
 }
 
 .track {

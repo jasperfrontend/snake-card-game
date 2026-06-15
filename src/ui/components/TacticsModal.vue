@@ -69,6 +69,21 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
         </li>
       </ul>
 
+      <div class="closer">
+        <p>
+          Here is the catch: every tactic above can work for you or against you. These are just nudges to get you
+          started. The real depth is in reading your opponents, guessing what they hold and the tricks they can turn on
+          you, while keeping count of everything already laid out on the snake. Anyone good at observation and simple
+          addition will feel the edge.
+        </p>
+        <p>
+          It pays to be aggressive early, while everyone is still under 50 points. A bite or two barely stings when your
+          score is low, and the pressure pays off. But never forget the cruel maths of this game: the points you force
+          onto others always outweigh the ones you save yourself. This is a snake, after all.
+        </p>
+        <p class="sting">No snake is ever your friend.</p>
+      </div>
+
       <button class="primary done" @click="emit('close')">Got it</button>
     </div>
   </div>
@@ -166,6 +181,28 @@ h2 {
   font-size: 14.5px;
   line-height: 1.5;
   color: var(--ink-soft);
+}
+
+.closer {
+  border-top: 1px solid rgb(168 123 43 / 30%);
+  margin: 22px 0 24px;
+  padding-top: 18px;
+}
+
+.closer p {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+
+.closer .sting {
+  font-family: var(--display), serif;
+  font-style: italic;
+  font-size: 19px;
+  text-align: center;
+  color: var(--gold);
+  margin: 18px 0 0;
 }
 
 button.primary {

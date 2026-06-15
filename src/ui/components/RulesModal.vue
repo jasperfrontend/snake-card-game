@@ -40,7 +40,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
       <div class="block">
         <h3>Your turn</h3>
         <ul>
-          <li>Play <b>one</b> card per turn — or attempt a <b>combo pin</b> (below).</li>
+          <li>Play <b>one</b> card per turn, or attempt a <b>combo pin</b> (below).</li>
           <li>
             You cannot push the snake <b>over its max</b> ({{ perPlayer }} × players, that's <b>{{ maxLength }}</b> at
             this table).
@@ -56,12 +56,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
 
       <div class="block">
         <h3>Combo pins</h3>
-        <p class="note">A skill rule, on by default — switch it off in Settings for the classic one-card game.</p>
+        <p class="note">A skill rule, on by default. Switch it off in Settings for the classic one-card game.</p>
         <ul>
           <li>No single card lands the max? Lay <b>2–3 numbers</b> in one turn to hit it <b>exactly</b>.</li>
           <li>
             Land it and you <b>pin</b>. Miss and you <b>bust</b>: the cards stay on the snake and you take
-            <b>10</b> (two cards) or <b>20</b> (three) — but the round plays on.
+            <b>10</b> (two cards) or <b>20</b> (three), but the round plays on.
           </li>
           <li>Nothing does the sum for you. That's the skill.</li>
         </ul>

@@ -150,7 +150,7 @@ const status = computed(() => {
   const cur = game.current.value;
   if (cur === humanSeat) {
     if (!game.awaitingHuman.value) return { you: true, text: 'Your turn' };
-    return { you: true, text: `Your turn — ${goalText.value}` };
+    return { you: true, text: `Your turn · ${goalText.value}` };
   }
   const thinking = game.thinkingSeat.value === cur;
   return { you: false, text: `${game.playerName(cur)} is ${thinking ? 'thinking' : 'playing'}…` };
@@ -325,9 +325,8 @@ const status = computed(() => {
             <span class="cb-title">Pin attempt</span>
             <span class="cb-hint">
               Lay food to land exactly on <b>{{ game.maxLength.value }}</b
-              >. <b>{{ game.comboLaid.value }}</b> laid<span v-if="game.comboLaid.value >= 2">
-                — committed, land it or take a bite</span
-              >.
+              >. <b>{{ game.comboLaid.value }}</b> laid.
+              <span v-if="game.comboLaid.value >= 2">Committed: land it or take a bite.</span>
             </span>
           </div>
           <button class="cb-end" @click="game.endCombo()">{{ comboEndLabel }}</button>

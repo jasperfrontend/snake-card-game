@@ -146,7 +146,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
         </div>
       </div>
 
-      <p class="note">Speed, tooltips and last-card rescue apply right away. Bots and hand size take effect on your next game.</p>
+      <p class="note">
+        Speed, tooltips and last-card rescue apply right away. Bots and hand size take effect on your next game.
+      </p>
 
       <div class="actions">
         <button class="ghost" @click="emit('close')">Done</button>

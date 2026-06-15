@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import {computed} from 'vue';
-import type {Card} from '../../engine/types';
+import { computed } from 'vue';
+import type { Card } from '../../engine/types';
 
 const props = defineProps<{ card?: Card; faceDown?: boolean; dimmed?: boolean; tips?: boolean }>();
 

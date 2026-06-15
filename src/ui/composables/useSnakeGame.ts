@@ -8,8 +8,8 @@
 // This file may use Vue, browser storage and (UI-side, outside the engine)
 // Math.random for the game seed; the engine itself stays pure and deterministic.
 
-import {computed, ref, type Ref} from 'vue';
-import {randInt, rngFromState} from '../../engine/rng';
+import { computed, ref, type Ref } from 'vue';
+import { randInt, rngFromState } from '../../engine/rng';
 import {
   advanceTurn,
   beginTurn,
@@ -22,8 +22,8 @@ import {
   pickLoser,
   startRound,
 } from '../../engine/rules';
-import {botChooseMove} from '../../bots/policy';
-import type {Card, Difficulty, GameEvent, GameState, Kind, Move, Player} from '../../engine/types';
+import { botChooseMove } from '../../bots/policy';
+import type { Card, Difficulty, GameEvent, GameState, Kind, Move, Player } from '../../engine/types';
 import {
   clearSave,
   loadRecord,
@@ -55,9 +55,9 @@ export interface Beat {
 export type GameSpeed = 'slow' | 'normal' | 'fast';
 
 const SPEED_PRESETS: Record<GameSpeed, { think: number; settle: number }> = {
-  slow: {think: 2300, settle: 800}, // ~3.1s, deliberate
+  slow: { think: 2300, settle: 800 }, // ~3.1s, deliberate
   normal: { think: 1500, settle: 550 }, // ~2.0s
-  fast: {think: 950, settle: 350}, // ~1.3s, snappy but not unhinged
+  fast: { think: 950, settle: 350 }, // ~1.3s, snappy but not unhinged
 };
 
 export interface GameOptions {

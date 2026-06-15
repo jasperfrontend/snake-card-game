@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import {computed} from 'vue';
-import type {SnakeSegment} from '../composables/useSnakeGame';
+import { computed } from 'vue';
+import type { SnakeSegment } from '../composables/useSnakeGame';
 
 const props = defineProps<{
   segments: SnakeSegment[];

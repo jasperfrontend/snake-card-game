@@ -16,7 +16,8 @@ async function playToEnd(seed: number, difficulty: 'easy' | 'medium' | 'hard') {
     if (g.awaitingHuman.value) {
       const mv = smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value);
       if (mv) await g.play(mv);
-      else if (g.canForfeit.value) await g.forfeitHand(); // forfeit-at-one: cornered last card
+      else if (g.canForfeit.value)
+        await g.forfeitHand(); // forfeit-at-one: cornered last card
       else break;
     } else if (g.state.value.phase === 'roundEnd') {
       await g.nextRound();

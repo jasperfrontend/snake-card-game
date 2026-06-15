@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue';
-import {type Beat, useSnakeGame} from './composables/useSnakeGame';
-import {hasSeenRules, markRulesSeen} from './persistence';
+import { computed, onMounted, ref, watch } from 'vue';
+import { type Beat, useSnakeGame } from './composables/useSnakeGame';
+import { hasSeenRules, markRulesSeen } from './persistence';
 import CardFace from './components/CardFace.vue';
 import SnakeRow from './components/SnakeRow.vue';
 import RulesModal from './components/RulesModal.vue';
@@ -322,7 +322,7 @@ const turnInfo = computed(() => {
     <section v-if="game.gameOver.value" class="banner over">
       <div class="over-msg">
         <strong v-if="game.loser.value === humanSeat"
-        >The snake got you! You lose. Highest score takes the bite.</strong
+          >The snake got you! You lose. Highest score takes the bite.</strong
         >
         <strong v-else>{{ game.playerName(game.loser.value ?? 0) }} hit 100 first: you survive. You win!</strong>
         <span class="over-sub">Lowest score wins · {{ standings }}</span>

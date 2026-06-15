@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onBeforeUnmount, onMounted, ref} from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const props = defineProps<{ maxLength: number; players: number }>();
 const emit = defineEmits<{ close: [] }>();
@@ -10,7 +10,7 @@ const TRICKS = [
   { rank: 'K', name: 'Coil', does: 'Reverse the direction of play.' },
   { rank: 'J', name: 'Slip', does: 'Skip the next player.' },
   { rank: 'Q', name: 'Shed', does: "Halve the snake's length, rounded down." },
-  {rank: 'A', name: 'Strike', does: 'Wild, count it as any value 0-9. Played as 0 it is a feint.'},
+  { rank: 'A', name: 'Strike', does: 'Wild, count it as any value 0-9. Played as 0 it is a feint.' },
   { rank: '★', name: 'Scramble', does: 'The next player bins their whole hand and draws 4 fresh.' },
 ];
 
@@ -73,9 +73,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
         </div>
         <div class="end bad">
           <h4>The Bite <span>you lose the round</span></h4>
-          <p>
-            It's your turn and every card overshoots, with no trick to escape. The snake bites you, take <b>10</b>.
-          </p>
+          <p>It's your turn and every card overshoots, with no trick to escape. The snake bites you, take <b>10</b>.</p>
         </div>
       </div>
 

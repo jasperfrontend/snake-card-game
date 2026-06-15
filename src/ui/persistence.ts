@@ -1,10 +1,10 @@
 // localStorage persistence. No backend, everything lives in the browser.
 // All access is guarded so this is a no-op under Vitest's node environment.
 
-import type {RngState} from '../engine/rng';
-import type {LegalMove} from '../engine/rules';
-import type {Difficulty, GameState} from '../engine/types';
-import type {GameSpeed, SnakeSegment} from './composables/useSnakeGame';
+import type { RngState } from '../engine/rng';
+import type { LegalMove } from '../engine/rules';
+import type { Difficulty, GameState } from '../engine/types';
+import type { GameSpeed, SnakeSegment } from './composables/useSnakeGame';
 
 const VERSION = 1;
 const K_SETTINGS = 'snake:settings:v1';

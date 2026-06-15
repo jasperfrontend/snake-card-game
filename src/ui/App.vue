@@ -811,7 +811,9 @@ button.ghost {
   align-items: center;
 }
 
-.forfeit {
+/* scoped to the button: the bare `.forfeit` also matched the small beat pill
+   (its type class is `forfeit`), stretching it to this button's 70px height */
+button.forfeit {
   margin-left: 6px;
   height: 70px;
   min-width: 70px;
@@ -831,7 +833,7 @@ button.ghost {
     transform 0.12s ease;
 }
 
-.forfeit:hover {
+button.forfeit:hover {
   background: rgb(168 123 43 / 8%);
   transform: translateY(-3px);
 }

@@ -168,13 +168,13 @@ const turnInfo = computed(() => {
           <circle cx="37" cy="10" r="1.6" fill="#A87B2B" />
         </svg>
         <h1>SNAKE</h1>
-      </div>
-      <div class="controls">
         <span class="record" :title="`${games} ${games === 1 ? 'game' : 'games'} played`">
           <b>{{ game.record.value.wins }}</b
           >W · <b>{{ game.record.value.losses }}</b
           >L
         </span>
+      </div>
+      <div class="controls">
         <div class="actions">
           <button class="ghost" @click="showSettings = true">Settings</button>
           <button class="ghost" @click="showRules = true">Rules</button>
@@ -1351,25 +1351,25 @@ button.forfeit:hover {
     height: 15px;
   }
 
-  /* record on the left of the row, the four buttons share the rest as an even
-     grid (and wrap to their own line when there isn't room beside the record) */
-  .controls {
+  /* the wordmark row spans full width; the W/L record rides to the far right of
+     it (next to SNAKE), so it costs no vertical space of its own */
+  .brand {
     width: 100%;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
   }
 
   .record {
-    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  /* the menu is its own full-width row of four even buttons */
+  .controls {
+    width: 100%;
   }
 
   .actions {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 6px;
-    flex: 1 1 240px;
   }
 
   .actions button {
@@ -1419,10 +1419,9 @@ button.forfeit:hover {
   }
 }
 
-@media (width <= 420px) {
-  /* tightest phones: two button rows beat four cramped columns */
+@media (width <= 360px) {
+  /* tightest phones: two rows of two beat four cramped columns */
   .actions {
-    flex-basis: 100%;
     grid-template-columns: repeat(2, 1fr);
   }
 }

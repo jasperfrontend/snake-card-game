@@ -161,4 +161,16 @@ const room = computed(() => props.maxLength - props.length);
   opacity: 0;
   transform: translateY(-10px) scale(0.85);
 }
+
+/* tighter vertical rhythm on mobile: pull the bar up under the big number, and
+   the snake row up under the bar, so the spacing matches the rest of the page */
+@media (width <= 620px) {
+  .track {
+    margin-top: 4px;
+  }
+
+  .body {
+    margin-top: 12px;
+  }
+}
 </style>

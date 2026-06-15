@@ -1261,7 +1261,7 @@ button.forfeit:hover {
 
 @media (width <= 620px) {
   .wrap {
-    padding: 14px 12px 76px;
+    padding: 8px 12px 76px;
   }
 
   .statusbar {
@@ -1272,7 +1272,8 @@ button.forfeit:hover {
   .bar {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 6px;
+    margin-bottom: 16px;
   }
 
   .bar h1 {
@@ -1294,21 +1295,22 @@ button.forfeit:hover {
     margin-left: auto;
   }
 
-  /* the menu is its own full-width row of four even buttons */
+  /* the menu is its own full-width row; block container so the flex row fills it */
   .controls {
+    display: block;
     width: 100%;
   }
 
   .actions {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
     gap: 6px;
   }
 
   .actions button {
-    width: 100%;
-    padding: 7px 4px;
-    font-size: 11px;
+    flex: 1;
+    min-width: 0;
+    padding: 9px 4px;
+    font-size: 13px;
   }
 
   /* three seats stay side by side; the decorative face-down cards go (the card
@@ -1350,12 +1352,17 @@ button.forfeit:hover {
   .tally-cell .t-pins {
     font-size: 28px;
   }
-}
 
-@media (width <= 360px) {
-  /* tightest phones: two rows of two beat four cramped columns */
-  .actions {
-    grid-template-columns: repeat(2, 1fr);
+  /* centre the hand so it's easier to reach one-handed */
+  .hand {
+    justify-content: center;
+  }
+
+  /* the round/over banner's action button goes full width and a touch bigger */
+  .banner .primary {
+    width: 100%;
+    padding: 11px 16px;
+    font-size: 14px;
   }
 }
 </style>

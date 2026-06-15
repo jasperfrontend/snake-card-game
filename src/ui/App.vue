@@ -398,8 +398,7 @@ const status = computed(() => {
     <!-- one fixed status line for the whole table; the page scrolls behind it -->
     <Transition name="statusbar">
       <div v-if="status" class="statusbar" :class="{ you: status.you }" role="status" aria-live="polite">
-        <span class="pip"></span>
-        <span class="txt">{{ status.text }}</span>
+        {{ status.text }}
       </div>
     </Transition>
   </div>
@@ -529,71 +528,31 @@ button.ghost {
 }
 
 /* ---- the table's one status line, fixed to the foot of the screen ---- */
+
+/* a full-width bar flush to the bottom of the screen; the page scrolls behind it */
 .statusbar {
   position: fixed;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 45;
-  max-width: min(92vw, 540px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 9px 18px;
-  border-radius: 999px;
+  padding: 11px 16px;
   font-family: var(--mono), monospace;
   font-size: 13px;
   letter-spacing: 0.04em;
   text-align: center;
   background: var(--cardback);
   color: var(--bone);
-  border: 1px solid rgb(215 180 92 / 35%);
-  box-shadow: 0 12px 30px -12px rgb(0 0 0 / 55%);
+  border-top: 1px solid rgb(215 180 92 / 35%);
+  box-shadow: 0 -8px 24px -14px rgb(0 0 0 / 50%);
   pointer-events: none;
 }
 
 .statusbar.you {
   background: var(--gold);
   color: var(--cardback);
-  border-color: var(--gold-bright);
+  border-top-color: var(--gold-bright);
   font-weight: 700;
-}
-
-.statusbar .pip {
-  flex: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--gold-bright);
-  box-shadow: 0 0 0 0 rgb(215 180 92 / 70%);
-  animation: pip 1.4s ease-out infinite;
-}
-
-.statusbar.you .pip {
-  background: var(--cardback);
-  box-shadow: 0 0 0 0 rgb(27 42 34 / 60%);
-  animation-name: pip-dark;
-}
-
-@keyframes pip {
-  0% {
-    box-shadow: 0 0 0 0 rgb(215 180 92 / 70%);
-  }
-
-  100% {
-    box-shadow: 0 0 0 9px rgb(215 180 92 / 0%);
-  }
-}
-
-@keyframes pip-dark {
-  0% {
-    box-shadow: 0 0 0 0 rgb(27 42 34 / 60%);
-  }
-
-  100% {
-    box-shadow: 0 0 0 9px rgb(27 42 34 / 0%);
-  }
 }
 
 .statusbar-enter-active,
@@ -606,7 +565,7 @@ button.ghost {
 .statusbar-enter-from,
 .statusbar-leave-to {
   opacity: 0;
-  transform: translate(-50%, 14px);
+  transform: translateY(100%);
 }
 
 .seats {
@@ -1306,8 +1265,7 @@ button.forfeit:hover {
   }
 
   .statusbar {
-    bottom: 10px;
-    padding: 8px 14px;
+    padding: 10px 14px;
     font-size: 12px;
   }
 

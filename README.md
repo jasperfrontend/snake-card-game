@@ -1,4 +1,4 @@
-# Snake — single-player card game
+# Snake: single-player card game
 
 ### ▶ Play now at **[avoidthebite.com](https://avoidthebite.com/)**
 
@@ -7,7 +7,7 @@ game, played against two bots. Built to read as a sibling of the printed ruleboo
 (`reference/snake-rulebook.html`), with behaviour matched to the reference Monte-Carlo
 simulator (`reference/snake_sim.py`).
 
-No backend, no database, no networking — everything runs in the browser.
+No backend, no database, no networking, everything runs in the browser.
 
 ## Play
 
@@ -18,7 +18,7 @@ npm run dev          # http://localhost:5173
 
 Feed the snake without overshooting its max length. Land exactly on the max to
 **pin** it (you score 0, everyone else +5); get cornered with no legal card and you
-are **bitten** (+10). Points are bad — first to 100 loses, everyone else wins. The
+are **bitten** (+10). Points are bad, first to 100 loses, everyone else wins. The
 wild **Ace** (Strike) is how you thread the needle for a pin.
 
 > The rulebook and the Python oracle use a max of **15 × players**; the playable
@@ -48,7 +48,7 @@ ESLint (`@vue/eslint-config-typescript`, essential Vue rules), Stylelint
 
 ```
 src/
-  engine/      pure, deterministic TS — no Vue, no DOM, no Math.random
+  engine/      pure, deterministic TS, no Vue, no DOM, no Math.random
     types.ts   deck.ts  rng.ts (mulberry32)  rules.ts  simulate.ts
   bots/
     policy.ts  smart heuristic + difficulty-aware imperfect bots
@@ -69,14 +69,14 @@ with a random tiebreak).
 
 **Difficulty** comes from two knobs on top of the smart baseline: `pinAwareness`
 (chance to take an available pin) and `mathError` (chance to miscount the room and
-play greedily). Weaker bots get bitten more and lose more — beatable, not trivial.
+play greedily). Weaker bots get bitten more and lose more, beatable, not trivial.
 
 **Persistence** (localStorage, no backend): an in-progress game resumes after a
 refresh, plus a win-loss record and the chosen difficulty.
 
 ## Deploy (static)
 
-The build output in `dist/` is a static site — host it anywhere.
+The build output in `dist/` is a static site, host it anywhere.
 
 Cloudflare Pages:
 
@@ -87,4 +87,4 @@ npx wrangler pages deploy dist        # or connect the repo in the Pages dashboa
 ```
 
 Or copy `dist/` to any static host / nginx root. No SSR, no server process.
-(An online leaderboard is the only feature that would need a backend — out of v1 scope.)
+(An online leaderboard is the only feature that would need a backend, out of v1 scope.)

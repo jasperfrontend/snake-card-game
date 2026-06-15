@@ -1,4 +1,4 @@
-# Snake — Build Plan (single player vs 2 bots)
+# Snake: Build Plan (single player vs 2 bots)
 
 A handoff plan for Claude Code. The goal is a polished, browser-based, single-player version of the card game Snake, played against two bots. This document is the brief. Work through it in order.
 
@@ -6,8 +6,8 @@ A handoff plan for Claude Code. The goal is a polished, browser-based, single-pl
 
 Drop these two files into the repo at `/reference` before starting. They are authoritative.
 
-- `snake_sim.py` — a complete, working implementation of the v6 rules in Python, plus a defensive bot policy and a statistical test harness. **This is the source of truth for game behavior.** When in doubt about a rule or an edge case, match this file. It also produces known statistics (see Phase 1 acceptance) that the TypeScript port must reproduce.
-- `snake-rulebook.html` — the player-facing rulebook. **This is the source of truth for visual identity.** Lift its design tokens (palette, fonts, card components) directly into the game so the two read as one product.
+- `snake_sim.py`, a complete, working implementation of the v6 rules in Python, plus a defensive bot policy and a statistical test harness. **This is the source of truth for game behavior.** When in doubt about a rule or an edge case, match this file. It also produces known statistics (see Phase 1 acceptance) that the TypeScript port must reproduce.
+- `snake-rulebook.html`, the player-facing rulebook. **This is the source of truth for visual identity.** Lift its design tokens (palette, fonts, card components) directly into the game so the two read as one product.
 
 ## Goal
 
@@ -90,13 +90,13 @@ Engine functions are pure: `applyMove(state, move, rng)` returns a new state plu
 
 ---
 
-## Phase 0 — Scaffold
+## Phase 0: Scaffold
 
 - [ ] Vite + Vue 3 + TS project, Vitest wired up, lint/format configured.
 - [ ] Folder structure above. Copy the two reference files into `/reference`.
 - [ ] `rng.ts` with a seeded mulberry32 and a tiny shuffle helper that takes an rng.
 
-## Phase 1 — Engine (pure TS, build and verify this before any UI)
+## Phase 1: Engine (pure TS, build and verify this before any UI)
 
 - [ ] Port the full v6 logic from `snake_sim.py`: deck builder, `legalMoves`, `applyMove` (handling all five tricks, pin and bite detection, hand refill, the stranded-trick path, and reshuffle when the draw pile empties), round runner, game runner with dealer rotation and the first-to-100 loss.
 - [ ] `simulate.ts`: a headless batch runner that plays N games with configurable player count and bot policy, and reports the same metrics the Python prints (rounds per game, plays-per-round distribution, bite vs pin percentages, trick usage per round, pins by Ace vs food, loser-by-seat).
@@ -109,7 +109,7 @@ Engine functions are pure: `applyMove(state, move, rng)` returns a new state plu
 
 If those land, the engine is correct. This is the QA gate.
 
-## Phase 2 — Bots and difficulty
+## Phase 2: Bots and difficulty
 
 - [ ] Port the defensive heuristic from `snake_sim.py`'s `choose_move` as the strong baseline.
 - [ ] Add difficulty by making the bot imperfect, controlled by a config: a `pinAwareness` probability (chance the bot notices and takes an available pin) and a `mathError` probability (chance it plays a slightly suboptimal card). The simulation showed perfect arithmetic pins about 88% and almost never gets bitten, which is no fun to beat, so imperfection is required, not optional.
@@ -120,7 +120,7 @@ If those land, the engine is correct. This is the QA gate.
 
 **Acceptance.** Re-run the batch swapping the bots between difficulties. Bite rate should rise as difficulty falls (mirroring the smart-vs-naive contrast in the sim: roughly 12% bites at smart, roughly 62% at naive). The human seat's win rate should climb noticeably against easier bots.
 
-## Phase 3 — Playable shell (function before form)
+## Phase 3: Playable shell (function before form)
 
 - [ ] `useSnakeGame` composable wrapping the engine: holds the GameState, exposes `play(move)` for the human, and auto-advances bot turns with a short delay so they feel deliberate. Emits the engine events for the UI to react to.
 - [ ] Human input: render the human's hand, click a card to play it. For an Ace, prompt for the value 0 to 9. Show the resulting length and which moves are legal.
@@ -128,7 +128,7 @@ If those land, the engine is correct. This is the QA gate.
 
 **Acceptance.** You can sit down and play a complete game to a win or a loss without touching the console.
 
-## Phase 4 — Visual polish (reuse the rulebook)
+## Phase 4: Visual polish (reuse the rulebook)
 
 - [ ] `tokens.css` from the rulebook: the gold, bone, ink and card-back palette, plus Fraunces, Newsreader and Space Mono.
 - [ ] The snake renders as a growing row of cards across the table, with a prominent length readout in mono and the max shown as a goal marker. The Bite and the Pin each get a real beat. Queen halve, Joker scramble, King reverse and Jack skip each get small, legible feedback. A bot "thinking" indicator.
@@ -136,7 +136,7 @@ If those land, the engine is correct. This is the QA gate.
 
 **Acceptance.** It looks like it belongs next to the rulebook and feels good to play.
 
-## Phase 5 — Persistence and deploy
+## Phase 5: Persistence and deploy
 
 - [ ] localStorage for: resume an in-progress game, a win-loss record, and settings (difficulty). No backend.
 - [ ] `vite build`, deploy the static output to Cloudflare Pages (or nginx). Confirm a refresh mid-game restores state.

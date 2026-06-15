@@ -1,10 +1,10 @@
-# Snake — How to Play & How to Win
+# Snake: How to Play & How to Win
 
 A push-your-luck card game. A snake grows down the middle of the table; everyone
 feeds it, and nobody wants to be the one who **overfeeds** it. Feed it too far and
 it **bites**. Get bitten too often and the snake takes you out.
 
-> ▶ Play it: **[avoidthebite.com](https://avoidthebite.com/)** — you against two bots.
+> ▶ Play it: **[avoidthebite.com](https://avoidthebite.com/)**, you against two bots.
 
 ---
 
@@ -12,7 +12,7 @@ it **bites**. Get bitten too often and the snake takes you out.
 
 Every card you play feeds the snake and makes it a little longer. The snake has a
 maximum length. Push it past that and it bites whoever was holding the card. A bite
-costs you points — and in this game **points are bad**. They are snakebite.
+costs you points, and in this game **points are bad**. They are snakebite.
 
 **The first player to reach 100 points loses. Everyone still standing wins.**
 
@@ -38,7 +38,7 @@ Number cards feed the snake. Face cards, aces and jokers bend the rules.
 ### Food (2–10)
 
 Worth its face value. Play one and the snake grows by exactly that much. A 10 is the
-biggest single bite you can take out of the room at the top — and you can't aim it.
+biggest single bite you can take out of the room at the top, and you can't aim it.
 
 ### Tricks
 
@@ -49,7 +49,7 @@ Tricks carry **no food value**. Each does a job instead.
 | **K** | Coil | Reverses the direction of play. |
 | **J** | Slip | Skips the next player. |
 | **Q** | Shed | Halves the snake's length, rounded down. |
-| **A** | Strike | Wild — counts as any value **0–9**. Played as **0** it's a *feint* (nothing changes). |
+| **A** | Strike | Wild, counts as any value **0–9**. Played as **0** it's a *feint* (nothing changes). |
 | **★** | Scramble (Joker) | The next player bins their whole hand and draws a fresh one. Bliss or disaster. |
 
 ---
@@ -63,22 +63,22 @@ Two rules constrain you:
 
 1. **No overshoot.** You cannot play a card that would push the snake **over** its max.
 2. **No trick last.** You cannot play a trick (K, Q, J, A or Joker) as the **last card**
-   in your hand — always keep a number for the bottom.
+   in your hand, always keep a number for the bottom.
 
 You don't draw after every card. You play your hand all the way down, and only when
 it's empty do you draw a fresh full hand. So everyone can watch your options shrink
-from a full hand to one card — which tells them when you're about to be in trouble.
+from a full hand to one card, which tells them when you're about to be in trouble.
 
 ### Stranded on a trick
 
-If a trick is somehow the only card you have left, you can't play it. **Draw one card**
-— now you're holding two, so the trick is no longer your last card. You may then play
+If a trick is somehow the only card you have left, you can't play it. **Draw one card**,
+now you're holding two, so the trick is no longer your last card. You may then play
 **either** card: the trick (to leave the drawn card for next time) or the drawn card.
 A lucky pull there can even win you the round on the spot.
 
 ### The pin attempt (combo pin)
 
-Sometimes no single card lands the snake exactly on its max — but **two or three of
+Sometimes no single card lands the snake exactly on its max, but **two or three of
 your number cards added together do**. You can play them in one turn: declare a **pin
 attempt** and lay 2–3 food cards one at a time, walking the snake up to land on the max
 **exactly**.
@@ -88,23 +88,23 @@ maths is on *you*. The reward is a pin from a hand that couldn't otherwise win. 
 
 - **Hit it exactly → you pin.** Same as any pin: you score 0, everyone else takes 5.
 - **Miss it → you bust.** The cards you already laid stay on the snake, and you take
-  **10** points (a two-card try) or **20** (a three-card try). It is **not** a bite — the
+  **10** points (a two-card try) or **20** (a three-card try). It is **not** a bite, the
   round keeps going, and you've left the snake longer and closer to the max for the next
-  player. (Lay one card and stop, and it's just an ordinary play — no penalty.)
+  player. (Lay one card and stop, and it's just an ordinary play, no penalty.)
 
-So it's a high-risk, high-reward play for the quick-witted — and, in a pinch, a way to
-dump a few dead cards and pass a nastier snake along. *(A skill rule — on by default;
+So it's a high-risk, high-reward play for the quick-witted, and, in a pinch, a way to
+dump a few dead cards and pass a nastier snake along. *(A skill rule, on by default;
 switch it off in Settings for the classic one-card-per-turn game.)*
 
 ### Forfeit (the chosen Joker)
 
-Dealt a rotten hand? You may **forfeit** it — bin the whole thing and draw a fresh
+Dealt a rotten hand? You may **forfeit** it, bin the whole thing and draw a fresh
 full hand. But it **costs your turn** (you don't feed the snake), and it's random, so
 it might save you or sink you. You can forfeit a full, freshly-dealt hand once per
-hand — a mulligan for a bad deal.
+hand, a mulligan for a bad deal.
 
 **Last-card rescue (a skill rule, on by default):** the app also lets you forfeit when
-you're down to your **last card** — so a lone card that would otherwise overshoot and
+you're down to your **last card**, so a lone card that would otherwise overshoot and
 bite you can be binned for a fresh hand instead. Switch it off in Settings for the
 classic sink-or-swim ending.
 
@@ -114,13 +114,13 @@ classic sink-or-swim ending.
 
 A round always ends one of two ways.
 
-### The Pin — *you win the round*
+### The Pin: *you win the round*
 
-You land the snake on its maximum **exactly** — with a single card, the wild Ace, or by
+You land the snake on its maximum **exactly**, with a single card, the wild Ace, or by
 adding **2–3 cards together** (a combo pin). You've pinned it. **You score 0, and everyone
 else takes 5.** This is what the wild Ace is for.
 
-### The Bite — *you lose the round*
+### The Bite: *you lose the round*
 
 It's your turn and you're cornered: every card you could play would shove the snake
 over the top, and you have no trick to wriggle out. The snake bites you. **Take 10
@@ -133,7 +133,7 @@ points.**
 Count the players and multiply. That's how long the snake can get before it bites.
 
 - The **tabletop rulebook** uses **15 × players** (45 at a 3-handed table).
-- The **app** uses a roomier **23 × players** — **69** at a 3-handed table — for more
+- The **app** uses a roomier **23 × players**, **69** at a 3-handed table, for more
   breathing room and choices.
 
 To start a round, flip the top card and use its number as the snake's starting length.
@@ -154,7 +154,7 @@ When *you* pin, you take **0** and dump +5 on everyone else. So, written out:
 your score  =  10 × (your bites)  +  5 × (pins by other players)
 ```
 
-**First to 100 loses; everyone else wins.** That formula is the whole game — and it's
+**First to 100 loses; everyone else wins.** That formula is the whole game, and it's
 why the strategy below works.
 
 ---
@@ -164,23 +164,23 @@ why the strategy below works.
 The bots play a tight defensive game and pin most rounds. Here's how to beat them.
 
 1. **It's a pin race, not a survival game.** A pin drops +5 on everyone else and 0 on
-   you — whoever pins *least* loses. Actively hunt pins; don't just dodge bites.
+   you, whoever pins *least* loses. Actively hunt pins; don't just dodge bites.
 
 2. **A bite costs double.** The +10 from a bite is worth two enemy pins. Always keep an
-   out for the danger zone — a trick or a small card — so you're never cornered.
+   out for the danger zone, a trick or a small card, so you're never cornered.
 
 3. **Dump big food early.** 9s and 10s are liabilities near the top; you won't be able
    to play them without overshooting. Offload them while the snake is low and there's
    room.
 
-4. **Hoard the low cards.** 2s, 3s and 4s are gold near the max — they nudge the snake
+4. **Hoard the low cards.** 2s, 3s and 4s are gold near the max, they nudge the snake
    safely and let you land on the exact number for a pin.
 
-5. **The Ace is your pin.** It's wild 0–9, so it pins from **up to 9 away** — your single
+5. **The Ace is your pin.** It's wild 0–9, so it pins from **up to 9 away**, your single
    best win tool. Played as 0 it's a feint: survive a turn without feeding. Save it for
    the kill.
 
-6. **The Queen is a panic button.** Shed halves the snake — wasted at length 12, a
+6. **The Queen is a panic button.** Shed halves the snake, wasted at length 12, a
    lifesaver at 60. Hold it for when things get dangerously high, and to tee up your own
    pin afterwards.
 
@@ -188,11 +188,11 @@ The bots play a tight defensive game and pin most rounds. Here's how to beat the
    with a King or skip with a Jack to shove the hot potato onto someone else.
 
 8. **Joker & Forfeit are gambles.** A Joker forces the next player to bin their hand and
-   redraw — brutal on someone hoarding Queens, but random, so *aim* it. Forfeit is the
+   redraw, brutal on someone hoarding Queens, but random, so *aim* it. Forfeit is the
    same bet on yourself: swap a dead hand, but it costs your turn.
 
 9. **Add up to the pin.** When no single card lands the max, check whether two or three of
-   your low cards *sum* to the gap — a combo pin wins from a hand that looked dead. But
+   your low cards *sum* to the gap, a combo pin wins from a hand that looked dead. But
    only commit once you've done the maths: a miss is a self-inflicted +10 or +20, and it
    hands the next player a tighter, more dangerous snake.
 
@@ -205,14 +205,14 @@ draw.
 
 ## Settings (digital version)
 
-- **Bots** — Easy (forgiving) / Medium (balanced) / Hard (brutal). Takes effect next game.
-- **Speed** — Slow / Normal / Fast bot pacing. Live.
-- **Hand** — 4 cards (tight) or 5 cards (casual). Five cards is far more forgiving —
+- **Bots**: Easy (forgiving) / Medium (balanced) / Hard (brutal). Takes effect next game.
+- **Speed**: Slow / Normal / Fast bot pacing. Live.
+- **Hand**: 4 cards (tight) or 5 cards (casual). Five cards is far more forgiving,
    roughly half the bites. Takes effect next game.
-- **Tooltips** — hover any card for a reminder of what it does. Live.
-- **Last-card rescue** — forfeit on your final card to escape a corner instead of taking
+- **Tooltips**: hover any card for a reminder of what it does. Live.
+- **Last-card rescue**: forfeit on your final card to escape a corner instead of taking
    the bite. Live. *(Skill rule; off = classic.)*
-- **Combo pins** — lay 2–3 cards in one turn to pin exactly, for a bust penalty if you
+- **Combo pins**: lay 2–3 cards in one turn to pin exactly, for a bust penalty if you
    miss. Live. *(Skill rule; off = classic.)*
 
 Your settings, win–loss record, and an in-progress game all save automatically and

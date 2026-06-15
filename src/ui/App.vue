@@ -175,10 +175,12 @@ const turnInfo = computed(() => {
           >W · <b>{{ game.record.value.losses }}</b
           >L
         </span>
-        <button class="ghost" @click="showSettings = true">Settings</button>
-        <button class="ghost" @click="showRules = true">Rules</button>
-        <button class="ghost" @click="showTactics = true">Tactics</button>
-        <button class="primary" @click="start">New game</button>
+        <div class="actions">
+          <button class="ghost" @click="showSettings = true">Settings</button>
+          <button class="ghost" @click="showRules = true">Rules</button>
+          <button class="ghost" @click="showTactics = true">Tactics</button>
+          <button class="primary" @click="start">New game</button>
+        </div>
       </div>
     </header>
 
@@ -465,6 +467,13 @@ const turnInfo = computed(() => {
   justify-content: flex-end;
   font-family: var(--mono), monospace;
   font-size: 12px;
+}
+
+/* on desktop the four buttons sit in the controls flex row exactly as before;
+   `display: contents` makes this wrapper invisible to layout. On mobile it
+   becomes a grid (see the media queries below). */
+.actions {
+  display: contents;
 }
 
 .record {
@@ -1323,18 +1332,98 @@ button.forfeit:hover {
 }
 
 @media (width <= 620px) {
+  .wrap {
+    padding: 14px 12px 48px;
+  }
+
   .bar {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .controls {
-    width: 100%;
-    justify-content: space-between;
+    gap: 8px;
   }
 
   .bar h1 {
+    font-size: 24px;
+  }
+
+  .crest {
+    width: 28px;
+    height: 15px;
+  }
+
+  /* record on the left of the row, the four buttons share the rest as an even
+     grid (and wrap to their own line when there isn't room beside the record) */
+  .controls {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .record {
+    flex: 0 0 auto;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    flex: 1 1 240px;
+  }
+
+  .actions button {
+    width: 100%;
+    padding: 7px 4px;
+    font-size: 11px;
+  }
+
+  /* three seats stay side by side; the decorative face-down cards go (the card
+     count already says how many) so the columns fit */
+  .seats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .seat {
+    padding: 8px;
+  }
+
+  .seat-head strong {
+    font-size: 14px;
+  }
+
+  .seat .backs {
+    display: none;
+  }
+
+  .seat-sub {
+    flex-direction: column;
+    gap: 1px;
+    font-size: 10px;
+  }
+
+  /* keep the pin/bite tally as three columns too, to match the seats */
+  .tally-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .tally-cell {
+    padding: 8px 6px;
+  }
+
+  .tally-cell .t-pins {
     font-size: 28px;
+  }
+}
+
+@media (width <= 420px) {
+  /* tightest phones: two button rows beat four cramped columns */
+  .actions {
+    flex-basis: 100%;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

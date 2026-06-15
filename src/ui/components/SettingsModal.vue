@@ -3,7 +3,13 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { Difficulty } from '../../engine/types';
 import type { GameSpeed } from '../composables/useSnakeGame';
 
-defineProps<{ difficulty: Difficulty; speed: GameSpeed; handSize: number; tooltips: boolean }>();
+defineProps<{
+  difficulty: Difficulty;
+  speed: GameSpeed;
+  handSize: number;
+  tooltips: boolean;
+  forfeitAtOne: boolean;
+}>();
 const emit = defineEmits<{
   close: [];
   newGame: [];
@@ -11,6 +17,7 @@ const emit = defineEmits<{
   'update:speed': [GameSpeed];
   'update:handSize': [number];
   'update:tooltips': [boolean];
+  'update:forfeitAtOne': [boolean];
 }>();
 
 const closeBtn = ref<HTMLButtonElement | null>(null);
@@ -122,7 +129,24 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
         </div>
       </div>
 
-      <p class="note">Speed and tooltips apply right away. Bots and hand size take effect on your next game.</p>
+      <div class="row">
+        <div class="row-head">
+          <span class="r-label">Last-card rescue</span>
+          <span class="r-tag live">live</span>
+        </div>
+        <div class="seg" role="group" aria-label="Forfeit on your last card">
+          <button class="seg-btn" :class="{ on: forfeitAtOne }" @click="emit('update:forfeitAtOne', true)">
+            <span class="s-main">On</span>
+            <span class="s-hint">escape the corner</span>
+          </button>
+          <button class="seg-btn" :class="{ on: !forfeitAtOne }" @click="emit('update:forfeitAtOne', false)">
+            <span class="s-main">Off</span>
+            <span class="s-hint">classic</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="note">Speed, tooltips and last-card rescue apply right away. Bots and hand size take effect on your next game.</p>
 
       <div class="actions">
         <button class="ghost" @click="emit('close')">Done</button>

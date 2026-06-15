@@ -171,10 +171,12 @@ const turnInfo = computed(() => {
         :speed="game.speed.value"
         :hand-size="game.handSize.value"
         :tooltips="game.tooltips.value"
+        :forfeit-at-one="game.forfeitAtOne.value"
         @update:difficulty="game.setDifficulty($event)"
         @update:speed="game.setSpeed($event)"
         @update:handSize="game.setHandSize($event)"
         @update:tooltips="game.setTooltips($event)"
+        @update:forfeit-at-one="game.setForfeitAtOne($event)"
         @new-game="settingsNewGame"
         @close="showSettings = false"
       />

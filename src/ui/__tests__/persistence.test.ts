@@ -40,7 +40,10 @@ async function driveToEnd(g: ReturnType<typeof useSnakeGame>) {
   let guard = 0;
   while (!g.gameOver.value && guard++ < 20000) {
     if (g.awaitingHuman.value) {
-      await g.play(smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value)!);
+      const mv = smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value);
+      if (mv) await g.play(mv);
+      else if (g.canForfeit.value) await g.forfeitHand(); // forfeit-at-one: cornered last card
+      else break;
     } else if (g.state.value.phase === 'roundEnd') {
       await g.nextRound();
     } else break;
@@ -101,7 +104,10 @@ describe('persistence', () => {
     let guard = 0;
     while (!g.gameOver.value && guard++ < 4000) {
       if (g.awaitingHuman.value) {
-        await g.play(smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value)!);
+        const mv = smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value);
+        if (mv) await g.play(mv);
+        else if (g.canForfeit.value) await g.forfeitHand();
+        else break;
       } else if (g.state.value.phase === 'roundEnd') {
         await g.nextRound();
       } else break;

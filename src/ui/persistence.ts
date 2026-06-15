@@ -18,6 +18,7 @@ export interface Settings {
   speed: GameSpeed;
   handSize: number;
   tooltips: boolean;
+  forfeitAtOne: boolean;
 }
 export interface Record {
   wins: number;
@@ -88,6 +89,7 @@ export function loadSettings(): Settings {
     speed: s?.speed ?? 'normal',
     handSize: s?.handSize ?? 4,
     tooltips: s?.tooltips ?? true,
+    forfeitAtOne: s?.forfeitAtOne ?? true,
   };
 }
 export function saveSettings(settings: Settings): void {

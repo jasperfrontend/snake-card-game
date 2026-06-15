@@ -3,8 +3,9 @@
 // own. The game must reach a clean game-over with someone at >= 100 points.
 
 import { describe, it, expect } from 'vitest';
-import { useSnakeGame } from '../useSnakeGame';
+import { useSnakeGame, type SnakeGame } from '../useSnakeGame';
 import { smartChooseMove } from '../../../bots/policy';
+import type { Card } from '../../../engine/types';
 
 async function playToEnd(seed: number, difficulty: 'easy' | 'medium' | 'hard') {
   const g = useSnakeGame({ players: 3, difficulty, seed, botDelayMs: 0 });
@@ -14,8 +15,9 @@ async function playToEnd(seed: number, difficulty: 'easy' | 'medium' | 'hard') {
   while (!g.gameOver.value && guard++ < 20000) {
     if (g.awaitingHuman.value) {
       const mv = smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value);
-      expect(mv).not.toBeNull();
-      await g.play(mv!);
+      if (mv) await g.play(mv);
+      else if (g.canForfeit.value) await g.forfeitHand(); // forfeit-at-one: cornered last card
+      else break;
     } else if (g.state.value.phase === 'roundEnd') {
       await g.nextRound();
     } else {
@@ -55,7 +57,10 @@ describe('useSnakeGame — full game', () => {
       let guard = 0;
       while (!g.gameOver.value && guard++ < 30000) {
         if (g.awaitingHuman.value) {
-          await g.play(smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value)!);
+          const mv = smartChooseMove(g.humanHand.value, g.length.value, g.maxLength.value);
+          if (mv) await g.play(mv);
+          else if (g.canForfeit.value) await g.forfeitHand();
+          else break;
         } else if (g.state.value.phase === 'roundEnd') {
           await g.nextRound();
         } else break;
@@ -87,8 +92,46 @@ describe('useSnakeGame — full game', () => {
     expect(g.canForfeit.value).toBe(false);
   });
 
+  it('forfeit-at-one rescues a cornered last card instead of biting', async () => {
+    // Force the human (seat 0) onto a single, overshooting card with the round
+    // live: a gap of 1, holding a 9. Normally an instant bite.
+    const corner = (g: SnakeGame) => {
+      const s = g.state.value;
+      s.current = 0;
+      s.phase = 'playing';
+      s.length = s.maxLength - 1; // gap of 1
+      const lone: Card[] = [{ kind: 'food', value: 9 }]; // overshoots, unplayable
+      s.players[0].hand = lone;
+      g.awaitingHuman.value = false; // let resume()'s loop take the turn
+    };
+
+    const on = useSnakeGame({ players: 3, seed: 7, botDelayMs: 0, forfeitAtOne: true });
+    await on.newGame();
+    corner(on);
+    await on.resume();
+    // no bite: the round is still live and the corner is offered as a forfeit
+    expect(on.state.value.phase).toBe('playing');
+    expect(on.awaitingHuman.value).toBe(true);
+    expect(on.legalMoves.value.length).toBe(0); // the lone 9 truly can't be played
+    expect(on.canForfeit.value).toBe(true);
+    await on.forfeitHand();
+    expect(on.humanHand.value.length).toBe(4); // swapped for a fresh full hand
+
+    // With the variant off, the identical corner is a bite on the human.
+    const off = useSnakeGame({ players: 3, seed: 7, botDelayMs: 0, forfeitAtOne: false });
+    await off.newGame();
+    corner(off);
+    await off.resume();
+    expect(off.canForfeit.value).toBe(false);
+    expect(off.state.value.roundResult?.ending).toBe('bite');
+    expect(off.state.value.roundResult?.who).toBe(0);
+  });
+
   it('only offers legal cards to the human while awaiting input', async () => {
-    const g = useSnakeGame({ players: 3, difficulty: 'easy', seed: 42, botDelayMs: 0 });
+    // classic invariant: awaiting ⟹ at least one legal move. The forfeit-at-one
+    // variant deliberately breaks it (a cornered last card awaits with no moves),
+    // so pin it off here.
+    const g = useSnakeGame({ players: 3, difficulty: 'easy', seed: 42, botDelayMs: 0, forfeitAtOne: false });
     await g.newGame();
     let checks = 0;
     let guard = 0;

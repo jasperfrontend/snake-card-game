@@ -79,6 +79,13 @@ export interface GameOptions {
    * callers (tests) leave it off so beginTurn's bundled resolution is used.
    */
   interactiveStranded?: boolean;
+  /**
+   * Skill variant: also allow forfeiting when you are down to your LAST card.
+   * Without it, a lone card that overshoots (or a stranded trick with no out) is
+   * an instant bite; with it, that corner offers a fresh hand instead. Off in
+   * headless tests by default so the bot-only simulation is untouched.
+   */
+  forfeitAtOne?: boolean;
 }
 
 const TRICK_NAMES: Record<string, string> = { K: 'Coil', J: 'Slip', Q: 'Shed', A: 'Strike', JOKER: 'Scramble' };
@@ -110,6 +117,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const speed = ref<GameSpeed>(opts.speed ?? settings0.speed);
   const handSize = ref<number>(opts.handSize ?? settings0.handSize); // applies on the next new game
   const tooltips = ref<boolean>(settings0.tooltips); // card hover tooltips on/off (live)
+  // forfeit-at-one is a live skill variant; opts wins (tests), else the setting.
+  const forfeitAtOne = ref<boolean>(opts.forfeitAtOne ?? settings0.forfeitAtOne);
 
   // A fixed think/settle override (used by headless tests) wins; otherwise the
   // pace follows the live `speed` setting and can change mid-game.
@@ -144,9 +153,10 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const pinCounts = ref<number[]>(Array.from({ length: n }, () => 0));
   const biteCounts = ref<number[]>(Array.from({ length: n }, () => 0));
 
-  // forfeit: bin a full, fresh hand for a new one. Once per hand (resets when
-  // the human's hand refills or a new round deals), so it's a mulligan for a bad
-  // hand, not a bite-escape button.
+  // forfeit: bin the hand for a new one. Once per hand-cycle (resets when the
+  // human's hand refills to full or a new round deals), so it's a mulligan, not
+  // an every-turn stall. Normally a full fresh hand only; the forfeit-at-one
+  // variant also unlocks it on your last card, as an escape from the corner.
   const forfeitUsed = ref(false);
 
   let ticking = false;
@@ -316,6 +326,18 @@ export function useSnakeGame(opts: GameOptions = {}) {
             if (awaitingHuman.value) return; // now choose either card normally
             continue; // round ended (deck exhausted, a degenerate bite)
           }
+          // forfeit-at-one rescue: a lone card with no safe play would let
+          // beginTurn corner the human into a bite. When the variant is
+          // available, surface the turn instead (play it if legal, or forfeit).
+          // Count the turn here exactly as beginTurn would, then wait for the
+          // human to resolve it via play() or forfeitHand().
+          if (forfeitAtOne.value && hand.length === 1 && !forfeitUsed.value) {
+            state.value.roundMeta.plays++;
+            legalMoves.value = computeLegalMoves(hand, state.value.length, state.value.maxLength);
+            awaitingHuman.value = true;
+            flushEvents();
+            return;
+          }
           const prep = beginTurn(state.value, rngBox.rng);
           flushEvents();
           if (prep.status === 'awaiting') {
@@ -423,6 +445,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
       speed: speed.value,
       handSize: handSize.value,
       tooltips: tooltips.value,
+      forfeitAtOne: forfeitAtOne.value,
     });
   }
 
@@ -447,6 +470,12 @@ export function useSnakeGame(opts: GameOptions = {}) {
   /** Toggle card hover tooltips (applies immediately). */
   function setTooltips(on: boolean): void {
     tooltips.value = on;
+    persistSettings();
+  }
+
+  /** Toggle the forfeit-at-one variant (applies immediately to the live game). */
+  function setForfeitAtOne(on: boolean): void {
+    forfeitAtOne.value = on;
     persistSettings();
   }
 
@@ -484,10 +513,16 @@ export function useSnakeGame(opts: GameOptions = {}) {
     await run();
   }
 
-  /** True only on a full, freshly-dealt hand the human hasn't mulliganed yet. */
-  const canForfeit = computed(
-    () => awaitingHuman.value && !forfeitUsed.value && state.value.players[humanSeat].hand.length === handSize.value,
-  );
+  /**
+   * Forfeit is offered on a full, freshly-dealt hand, and — with the
+   * forfeit-at-one variant — also on your last remaining card (the corner
+   * escape). Either way it's gated to once per hand-cycle.
+   */
+  const canForfeit = computed(() => {
+    if (!awaitingHuman.value || forfeitUsed.value) return false;
+    const len = state.value.players[humanSeat].hand.length;
+    return len === handSize.value || (forfeitAtOne.value && len === 1);
+  });
 
   /** Forfeit the whole hand for a fresh one; this spends your turn (a chosen Joker). */
   async function forfeitHand(): Promise<void> {
@@ -539,6 +574,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     speed,
     handSize,
     tooltips,
+    forfeitAtOne,
     strandedNote,
     strandedDrawn,
     pinCounts,
@@ -572,6 +608,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     setDifficulty,
     setHandSize,
     setTooltips,
+    setForfeitAtOne,
     loadSaved,
     resume,
   };

@@ -199,8 +199,9 @@ function resolvePin(state: GameState, cur: number, pinKind: PinKind): void {
   };
 }
 
-/** The normal tail of a non-pinning play: refill an emptied hand, advance a seat. */
-function finishTurn(state: GameState, cur: number, rng: Rng): void {
+/** The normal tail of a non-pinning play: refill an emptied hand, advance a seat.
+ *  Exposed so the interactive combo flow can finalize a single laid card. */
+export function finishTurn(state: GameState, cur: number, rng: Rng): void {
   const hand = state.players[cur].hand;
   if (hand.length === 0) {
     for (let k = 0; k < state.handSize; k++) {

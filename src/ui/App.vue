@@ -39,6 +39,11 @@ function settingsNewGame() {
 const humanSeat = game.humanSeat;
 
 function clickCard(i: number) {
+  // mid-attempt, a click lays the card into the combo (food only, hidden sum)
+  if (game.comboActive.value) {
+    game.layCombo(i);
+    return;
+  }
   if (!game.awaitingHuman.value || !game.legalIndices.value.has(i)) return;
   const card = game.humanHand.value[i];
   if (card.kind === 'A') {
@@ -48,6 +53,27 @@ function clickCard(i: number) {
   selectedAce.value = null;
   game.play({ cardIndex: i });
 }
+
+// which hand cards are clickable now: the layable food set during an attempt,
+// otherwise the normal legal moves.
+function handEnabled(i: number): boolean {
+  return game.comboActive.value
+    ? game.comboLayable.value.has(i)
+    : game.awaitingHuman.value && game.legalIndices.value.has(i);
+}
+
+function beginCombo() {
+  selectedAce.value = null;
+  game.startCombo();
+}
+
+// the end-attempt button's label depends on how many cards are committed
+const comboEndLabel = computed(() => {
+  const laid = game.comboLaid.value;
+  if (laid === 0) return 'Cancel';
+  if (laid === 1) return 'Just play this one';
+  return `Give up · +${laid >= 3 ? 20 : 10}`;
+});
 
 function playAce(value: number) {
   if (selectedAce.value === null) return;
@@ -72,6 +98,7 @@ const beatText: Record<string, string> = {
   slip: 'slip',
   scramble: 'scramble',
   forfeit: 'new hand',
+  combobust: 'pin missed',
 };
 let beatTimer: ReturnType<typeof setTimeout> | undefined;
 watch(
@@ -172,11 +199,13 @@ const turnInfo = computed(() => {
         :hand-size="game.handSize.value"
         :tooltips="game.tooltips.value"
         :forfeit-at-one="game.forfeitAtOne.value"
+        :combo-pin="game.comboPin.value"
         @update:difficulty="game.setDifficulty($event)"
         @update:speed="game.setSpeed($event)"
         @update:handSize="game.setHandSize($event)"
         @update:tooltips="game.setTooltips($event)"
         @update:forfeit-at-one="game.setForfeitAtOne($event)"
+        @update:combo-pin="game.setComboPin($event)"
         @new-game="settingsNewGame"
         @close="showSettings = false"
       />
@@ -256,19 +285,15 @@ const turnInfo = computed(() => {
           :key="i"
           class="hand-card"
           :class="{
-            legal: game.awaitingHuman.value && game.legalIndices.value.has(i),
+            legal: handEnabled(i),
             picking: selectedAce === i,
             'just-drawn': c === game.strandedDrawn.value,
           }"
-          :disabled="!game.awaitingHuman.value || !game.legalIndices.value.has(i)"
+          :disabled="!handEnabled(i)"
           @click="clickCard(i)"
         >
           <span v-if="c === game.strandedDrawn.value" class="drawn-tag">drawn</span>
-          <CardFace
-            :card="c"
-            :dimmed="!game.awaitingHuman.value || !game.legalIndices.value.has(i)"
-            :tips="game.tooltips.value"
-          />
+          <CardFace :card="c" :dimmed="!handEnabled(i)" :tips="game.tooltips.value" />
         </button>
 
         <button
@@ -281,7 +306,33 @@ const turnInfo = computed(() => {
           <span class="ff-text">Forfeit</span>
           <span class="ff-sub">{{ game.handSize.value }} new</span>
         </button>
+
+        <button
+          v-if="game.canCombo.value"
+          class="combo-start"
+          title="Lay 2–3 food cards to land the snake EXACTLY on max. Miss it and you take a bite (+10 for two cards, +20 for three)."
+          @click="beginCombo"
+        >
+          <span class="cs-icon">∑</span>
+          <span class="cs-text">Pin attempt</span>
+          <span class="cs-sub">2–3 cards</span>
+        </button>
       </div>
+
+      <Transition name="pop">
+        <div v-if="game.comboActive.value" class="combo-bar" role="status" aria-live="polite">
+          <div class="cb-info">
+            <span class="cb-title">Pin attempt</span>
+            <span class="cb-hint">
+              Lay food to land exactly on <b>{{ game.maxLength.value }}</b
+              >. <b>{{ game.comboLaid.value }}</b> laid<span v-if="game.comboLaid.value >= 2">
+                — committed, land it or take a bite</span
+              >.
+            </span>
+          </div>
+          <button class="cb-end" @click="game.endCombo()">{{ comboEndLabel }}</button>
+        </div>
+      </Transition>
 
       <div v-if="selectedAce !== null" class="ace-picker">
         <span>Strike as…</span>
@@ -300,7 +351,9 @@ const turnInfo = computed(() => {
         <span v-else>Watching the table…</span>
       </p>
       <p
-        v-else-if="game.awaitingHuman.value && selectedAce === null && !game.strandedNote.value"
+        v-else-if="
+          game.awaitingHuman.value && selectedAce === null && !game.strandedNote.value && !game.comboActive.value
+        "
         class="waiting your-turn"
       >
         Your turn. Play a glowing card.
@@ -802,6 +855,105 @@ button.ghost {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-soft);
+}
+
+.combo-start {
+  height: 70px;
+  min-width: 78px;
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: 1.5px solid var(--gold);
+  border-radius: 9px;
+  background: linear-gradient(160deg, var(--bone), var(--bone-2, #ebe2cf));
+  color: var(--gold);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease;
+}
+
+.combo-start:hover {
+  background: rgb(168 123 43 / 12%);
+  transform: translateY(-3px);
+}
+
+.combo-start .cs-icon {
+  font-family: var(--display), serif;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.combo-start .cs-text {
+  font-family: var(--mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.combo-start .cs-sub {
+  font-family: var(--mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.combo-bar {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  background: linear-gradient(160deg, var(--cardback, #1b2a22), #16221b);
+  color: var(--bone);
+}
+
+.combo-bar .cb-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.combo-bar .cb-title {
+  font-family: var(--mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 10px;
+  color: var(--gold-bright, #d7b45c);
+}
+
+.combo-bar .cb-hint {
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.combo-bar .cb-hint b {
+  color: var(--gold-bright, #d7b45c);
+}
+
+.combo-bar .cb-end {
+  flex: none;
+  font-family: var(--mono), monospace;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 14px;
+  border: 1px solid var(--gold);
+  border-radius: 7px;
+  background: var(--gold);
+  color: var(--cardback, #1b2a22);
+  cursor: pointer;
+}
+
+.combo-bar .cb-end:hover {
+  background: var(--gold-bright, #d7b45c);
 }
 
 .hand-card {

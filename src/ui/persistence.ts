@@ -19,6 +19,7 @@ export interface Settings {
   handSize: number;
   tooltips: boolean;
   forfeitAtOne: boolean;
+  comboPin: boolean;
 }
 export interface Record {
   wins: number;
@@ -90,6 +91,7 @@ export function loadSettings(): Settings {
     handSize: s?.handSize ?? 4,
     tooltips: s?.tooltips ?? true,
     forfeitAtOne: s?.forfeitAtOne ?? true,
+    comboPin: s?.comboPin ?? true,
   };
 }
 export function saveSettings(settings: Settings): void {

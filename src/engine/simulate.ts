@@ -233,7 +233,9 @@ export function comboReport(): string {
   for (const d of ['hard', 'medium', 'easy'] as const) {
     const base = winRateVsBots(smartPolicy, botPolicy, d, GAMES, 555, MP);
     const combo = winRateVsBots(smartComboPolicy, botComboPolicy, d, GAMES, 555, MP);
-    out.push(`${d.padStart(8)} ${((100 * base).toFixed(0) + '%').padStart(9)} ${((100 * combo).toFixed(0) + '%').padStart(9)}`);
+    out.push(
+      `${d.padStart(8)} ${((100 * base).toFixed(0) + '%').padStart(9)} ${((100 * combo).toFixed(0) + '%').padStart(9)}`,
+    );
   }
   return out.join('\n');
 }

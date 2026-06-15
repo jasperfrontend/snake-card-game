@@ -14,10 +14,13 @@ import {
   advanceTurn,
   beginTurn,
   type ChoosePolicy,
+  comboBust,
+  comboFeed,
   drawCard,
   endBite,
   executeCombo,
   executeMove,
+  finishTurn,
   type LegalMove,
   legalMoves as computeLegalMoves,
   pickLoser,
@@ -88,6 +91,12 @@ export interface GameOptions {
    * headless tests by default so the bot-only simulation is untouched.
    */
   forfeitAtOne?: boolean;
+  /**
+   * Skill variant: lay 2–3 food cards in one turn to land the snake EXACTLY on
+   * max. Missing busts (10 for a 2-card try, 20 for 3) but play continues. Enables
+   * the bots' honest-combo play too. Off in headless tests by default.
+   */
+  comboPin?: boolean;
 }
 
 const TRICK_NAMES: Record<string, string> = { K: 'Coil', J: 'Slip', Q: 'Shed', A: 'Strike', JOKER: 'Scramble' };
@@ -101,7 +110,16 @@ function cardLabel(c: Card): string {
   return `a ${c.kind} (${trickName(c.kind)})`;
 }
 
-const BEAT_TYPES = new Set<GameEvent['type']>(['pin', 'bite', 'shed', 'coil', 'slip', 'scramble', 'forfeit']);
+const BEAT_TYPES = new Set<GameEvent['type']>([
+  'pin',
+  'bite',
+  'shed',
+  'coil',
+  'slip',
+  'scramble',
+  'forfeit',
+  'combobust',
+]);
 
 function mod(i: number, n: number): number {
   return ((i % n) + n) % n;
@@ -121,6 +139,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
   const tooltips = ref<boolean>(settings0.tooltips); // card hover tooltips on/off (live)
   // forfeit-at-one is a live skill variant; opts wins (tests), else the setting.
   const forfeitAtOne = ref<boolean>(opts.forfeitAtOne ?? settings0.forfeitAtOne);
+  const comboPin = ref<boolean>(opts.comboPin ?? settings0.comboPin);
 
   // A fixed think/settle override (used by headless tests) wins; otherwise the
   // pace follows the live `speed` setting and can change mid-game.
@@ -161,6 +180,11 @@ export function useSnakeGame(opts: GameOptions = {}) {
   // variant also unlocks it on your last card, as an escape from the corner.
   const forfeitUsed = ref(false);
 
+  // combo pin (human, interactive): an in-progress multi-card attempt this turn.
+  // comboLaid is how many cards have been laid; 2+ commits you to a pin or a bust.
+  const comboActive = ref(false);
+  const comboLaid = ref(0);
+
   let ticking = false;
   let segId = 0;
   let beatId = 0;
@@ -179,7 +203,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     }));
   }
 
-  const botChoose: ChoosePolicy = (s, r) => botChooseMove(s, difficulty.value, r);
+  const botChoose: ChoosePolicy = (s, r) => botChooseMove(s, difficulty.value, r, comboPin.value);
 
   function delay(ms: number): Promise<void> {
     if (ms <= 0) return Promise.resolve();
@@ -253,6 +277,8 @@ export function useSnakeGame(opts: GameOptions = {}) {
         return `${who} scrambled: whole hand binned, 4 fresh drawn.`;
       case 'forfeit':
         return `${who} forfeit the hand: ${handSize.value} fresh cards.`;
+      case 'combobust':
+        return `${who} reached for a ${p.laid}-card pin and missed: +${p.penalty}.`;
       case 'refill':
         return `${who} empty: draw a fresh 4.`;
       case 'reshuffle':
@@ -301,6 +327,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     loser.value = null;
     pinCounts.value = saved.pins ?? Array.from({ length: n }, () => 0);
     biteCounts.value = saved.bites ?? Array.from({ length: n }, () => 0);
+    cancelCombo();
     finishStranded();
     segId = saved.snake.reduce((m, s) => Math.max(m, s.id), 0);
     return true;
@@ -449,6 +476,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
       handSize: handSize.value,
       tooltips: tooltips.value,
       forfeitAtOne: forfeitAtOne.value,
+      comboPin: comboPin.value,
     });
   }
 
@@ -482,6 +510,13 @@ export function useSnakeGame(opts: GameOptions = {}) {
     persistSettings();
   }
 
+  /** Toggle the combo-pin variant (applies immediately to the live game). */
+  function setComboPin(on: boolean): void {
+    comboPin.value = on;
+    if (!on) cancelCombo();
+    persistSettings();
+  }
+
   async function newGame(diff?: Difficulty): Promise<void> {
     if (diff) difficulty.value = diff;
     persistSettings();
@@ -500,6 +535,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     pinCounts.value = Array.from({ length: n }, () => 0);
     biteCounts.value = Array.from({ length: n }, () => 0);
     forfeitUsed.value = false;
+    cancelCombo();
     finishStranded();
     clearSave();
     flushEvents();
@@ -516,13 +552,88 @@ export function useSnakeGame(opts: GameOptions = {}) {
     await run();
   }
 
+  // ----------------------------------------------------------- combo pin (human)
+  // An interactive multi-card pin: the player lays food cards one at a time,
+  // hidden-sum, trying to land EXACTLY on max. The first card is free (laying one
+  // then stopping is an ordinary play); laying a second commits to a pin or a bust
+  // (10 for two cards, 20 for three). A bust keeps the cards on the snake and
+  // passes the turn on — it never ends the round. Mirrors executeCombo for bots.
+
+  function cancelCombo(): void {
+    comboActive.value = false;
+    comboLaid.value = 0;
+  }
+
+  /** Food cards in hand that still fit without overshooting — the layable set. */
+  const comboLayable = computed<Set<number>>(() => {
+    const set = new Set<number>();
+    if (comboLaid.value >= 3) return set; // capped at three cards
+    const hand = state.value.players[humanSeat].hand;
+    const room = state.value.maxLength - state.value.length;
+    hand.forEach((c, i) => {
+      if (c.kind === 'food' && (c.value as number) <= room) set.add(i);
+    });
+    return set;
+  });
+
+  /** Whether the human may START a pin attempt: variant on, their turn, not mid-
+   *  attempt, and at least two food cards in hand (the minimum for a combo). */
+  const canCombo = computed(() => {
+    if (!comboPin.value || !awaitingHuman.value || comboActive.value) return false;
+    const foods = state.value.players[humanSeat].hand.filter((c) => c.kind === 'food').length;
+    return foods >= 2;
+  });
+
+  /** Begin a pin attempt (no card laid yet). */
+  function startCombo(): void {
+    if (!canCombo.value) return;
+    comboActive.value = true;
+    comboLaid.value = 0;
+    finishStranded();
+  }
+
+  /** Lay one food card into the in-progress attempt. Resolves a pin if it lands. */
+  async function layCombo(cardIndex: number): Promise<void> {
+    if (!comboActive.value || !awaitingHuman.value || !comboLayable.value.has(cardIndex)) return;
+    const res = comboFeed(state.value, cardIndex);
+    comboLaid.value++;
+    if (res.pinned) {
+      awaitingHuman.value = false;
+      legalMoves.value = [];
+      cancelCombo();
+      flushEvents();
+      await run(); // the round ended on the pin
+      return;
+    }
+    flushEvents(); // the snake grew; stay in the attempt for the next card
+  }
+
+  /** Finish the attempt: 0 cards cancels, 1 card is an ordinary play, 2+ busts. */
+  async function endCombo(): Promise<void> {
+    if (!comboActive.value) return;
+    const laid = comboLaid.value;
+    if (laid === 0) {
+      cancelCombo(); // nothing laid — back to a normal turn
+      return;
+    }
+    awaitingHuman.value = false;
+    legalMoves.value = [];
+    const cur = state.value.current;
+    if (laid === 1)
+      finishTurn(state.value, cur, rngBox.rng); // one card = a normal play
+    else comboBust(state.value, laid, rngBox.rng); // two or three = a bust
+    cancelCombo();
+    flushEvents();
+    await run();
+  }
+
   /**
    * Forfeit is offered on a full, freshly-dealt hand, and — with the
    * forfeit-at-one variant — also on your last remaining card (the corner
    * escape). Either way it's gated to once per hand-cycle.
    */
   const canForfeit = computed(() => {
-    if (!awaitingHuman.value || forfeitUsed.value) return false;
+    if (!awaitingHuman.value || forfeitUsed.value || comboActive.value) return false;
     const len = state.value.players[humanSeat].hand.length;
     return len === handSize.value || (forfeitAtOne.value && len === 1);
   });
@@ -557,6 +668,7 @@ export function useSnakeGame(opts: GameOptions = {}) {
     legalMoves.value = [];
     beat.value = null;
     forfeitUsed.value = false;
+    cancelCombo();
     finishStranded();
     flushEvents();
     await run();
@@ -578,6 +690,9 @@ export function useSnakeGame(opts: GameOptions = {}) {
     handSize,
     tooltips,
     forfeitAtOne,
+    comboPin,
+    comboActive,
+    comboLaid,
     strandedNote,
     strandedDrawn,
     pinCounts,
@@ -600,18 +715,24 @@ export function useSnakeGame(opts: GameOptions = {}) {
     isHumanTurn: computed(() => awaitingHuman.value),
     drawCount: computed(() => state.value.drawPile.length),
     canForfeit,
+    canCombo,
+    comboLayable,
 
     playerName,
     humanSeat,
     newGame,
     play,
     forfeitHand,
+    startCombo,
+    layCombo,
+    endCombo,
     nextRound,
     setSpeed,
     setDifficulty,
     setHandSize,
     setTooltips,
     setForfeitAtOne,
+    setComboPin,
     loadSaved,
     resume,
   };

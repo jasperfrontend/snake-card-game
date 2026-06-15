@@ -9,6 +9,7 @@ defineProps<{
   handSize: number;
   tooltips: boolean;
   forfeitAtOne: boolean;
+  comboPin: boolean;
 }>();
 const emit = defineEmits<{
   close: [];
@@ -18,6 +19,7 @@ const emit = defineEmits<{
   'update:handSize': [number];
   'update:tooltips': [boolean];
   'update:forfeitAtOne': [boolean];
+  'update:comboPin': [boolean];
 }>();
 
 const closeBtn = ref<HTMLButtonElement | null>(null);
@@ -146,8 +148,25 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
         </div>
       </div>
 
+      <div class="row">
+        <div class="row-head">
+          <span class="r-label">Combo pins</span>
+          <span class="r-tag live">live</span>
+        </div>
+        <div class="seg" role="group" aria-label="Multi-card pin attempts">
+          <button class="seg-btn" :class="{ on: comboPin }" @click="emit('update:comboPin', true)">
+            <span class="s-main">On</span>
+            <span class="s-hint">2–3 card pins</span>
+          </button>
+          <button class="seg-btn" :class="{ on: !comboPin }" @click="emit('update:comboPin', false)">
+            <span class="s-main">Off</span>
+            <span class="s-hint">classic</span>
+          </button>
+        </div>
+      </div>
+
       <p class="note">
-        Speed, tooltips and last-card rescue apply right away. Bots and hand size take effect on your next game.
+        Speed, tooltips and the skill rules apply right away. Bots and hand size take effect on your next game.
       </p>
 
       <div class="actions">

@@ -128,6 +128,64 @@ describe('useSnakeGame — full game', () => {
     expect(off.state.value.roundResult?.who).toBe(0);
   });
 
+  describe('human combo pin', () => {
+    const food = (v: number): Card => ({ kind: 'food', value: v });
+
+    // force seat 0 to be awaiting with a known hand and gap, the round live
+    function arrange(g: SnakeGame, hand: Card[], gap: number, draw: Card[] = []) {
+      const s = g.state.value;
+      s.current = 0;
+      s.phase = 'playing';
+      s.length = s.maxLength - gap;
+      s.players[0].hand = hand;
+      s.players[0].score = 0;
+      s.drawPile = draw;
+      g.awaitingHuman.value = true;
+    }
+
+    it('laying cards that sum to the gap pins the round', async () => {
+      const g = useSnakeGame({ players: 3, seed: 5, botDelayMs: 0, comboPin: true });
+      await g.newGame();
+      arrange(g, [food(4), food(5), food(7)], 9); // 4 + 5 = 9
+      expect(g.canCombo.value).toBe(true);
+
+      g.startCombo();
+      await g.layCombo(0); // lay the 4
+      expect(g.state.value.roundResult).toBeUndefined(); // one card down, not committed-resolved
+      await g.layCombo(0); // the 5 shifted to index 0 → lands the pin
+
+      expect(g.state.value.roundResult).toMatchObject({ ending: 'pin', who: 0, pinKind: 'food' });
+    });
+
+    it('a missed 2-card attempt busts for 10 and play continues (not a round end)', async () => {
+      const g = useSnakeGame({ players: 3, seed: 5, botDelayMs: 0, comboPin: true });
+      await g.newGame();
+      arrange(g, [food(4), food(2), food(8)], 9, [food(3), food(5), food(6), food(7)]); // 4 + 2 = 6, short
+
+      g.startCombo();
+      await g.layCombo(0); // 4
+      await g.layCombo(0); // 2 (shifted)
+      expect(g.comboLaid.value).toBe(2);
+      await g.endCombo(); // give up: 2-card bust
+
+      // the penalty landed (a later bot pin can only add +5 splash on top)
+      expect(g.state.value.players[0].score).toBeGreaterThanOrEqual(10);
+      expect(g.log.value.some((l) => l.includes('reached for a 2-card pin'))).toBe(true);
+    });
+
+    it('laying one card then ending is an ordinary play, no penalty', async () => {
+      const g = useSnakeGame({ players: 3, seed: 5, botDelayMs: 0, comboPin: true });
+      await g.newGame();
+      arrange(g, [food(4), food(5), food(6)], 20, [food(3), food(5), food(6), food(7)]);
+
+      g.startCombo();
+      await g.layCombo(0); // lay one
+      await g.endCombo(); // one card down → finalize as a normal play
+
+      expect(g.log.value.some((l) => l.includes('reached for a'))).toBe(false); // no bust
+    });
+  });
+
   it('only offers legal cards to the human while awaiting input', async () => {
     // classic invariant: awaiting ⟹ at least one legal move. The forfeit-at-one
     // variant deliberately breaks it (a cornered last card awaits with no moves),

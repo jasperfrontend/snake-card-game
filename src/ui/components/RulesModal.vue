@@ -40,14 +40,30 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
       <div class="block">
         <h3>Your turn</h3>
         <ul>
-          <li>Play exactly <b>one</b> card per round.</li>
+          <li>Play <b>one</b> card per turn — or attempt a <b>combo pin</b> (below).</li>
           <li>
             You cannot push the snake <b>over its max</b> ({{ perPlayer }} × players, that's <b>{{ maxLength }}</b> at
             this table).
           </li>
           <li>You cannot play a <b>trick</b> as your last card, keep a number for the bottom.</li>
-          <li>Play your hand down to empty, then draw a fresh 4.</li>
-          <li>Dealt a rotten hand? <b>Forfeit</b> it for a fresh one, but that spends your turn.</li>
+          <li>Play your hand down to empty, then draw a fresh hand.</li>
+          <li>
+            Dealt a rotten hand? <b>Forfeit</b> it for a fresh one, but that spends your turn. With
+            <b>last-card rescue</b> on, you can forfeit your final card too, to dodge a corner instead of being bitten.
+          </li>
+        </ul>
+      </div>
+
+      <div class="block">
+        <h3>Combo pins</h3>
+        <p class="note">A skill rule, on by default — switch it off in Settings for the classic one-card game.</p>
+        <ul>
+          <li>No single card lands the max? Lay <b>2–3 numbers</b> in one turn to hit it <b>exactly</b>.</li>
+          <li>
+            Land it and you <b>pin</b>. Miss and you <b>bust</b>: the cards stay on the snake and you take
+            <b>10</b> (two cards) or <b>20</b> (three) — but the round plays on.
+          </li>
+          <li>Nothing does the sum for you. That's the skill.</li>
         </ul>
       </div>
 

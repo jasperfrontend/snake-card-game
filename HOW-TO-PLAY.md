@@ -76,12 +76,37 @@ If a trick is somehow the only card you have left, you can't play it. **Draw one
 **either** card: the trick (to leave the drawn card for next time) or the drawn card.
 A lucky pull there can even win you the round on the spot.
 
+### The pin attempt (combo pin)
+
+Sometimes no single card lands the snake exactly on its max — but **two or three of
+your number cards added together do**. You can play them in one turn: declare a **pin
+attempt** and lay 2–3 food cards one at a time, walking the snake up to land on the max
+**exactly**.
+
+There's no calculator. The snake's length is right there on the table, but doing the
+maths is on *you*. The reward is a pin from a hand that couldn't otherwise win. The risk:
+
+- **Hit it exactly → you pin.** Same as any pin: you score 0, everyone else takes 5.
+- **Miss it → you bust.** The cards you already laid stay on the snake, and you take
+  **10** points (a two-card try) or **20** (a three-card try). It is **not** a bite — the
+  round keeps going, and you've left the snake longer and closer to the max for the next
+  player. (Lay one card and stop, and it's just an ordinary play — no penalty.)
+
+So it's a high-risk, high-reward play for the quick-witted — and, in a pinch, a way to
+dump a few dead cards and pass a nastier snake along. *(A skill rule — on by default;
+switch it off in Settings for the classic one-card-per-turn game.)*
+
 ### Forfeit (the chosen Joker)
 
 Dealt a rotten hand? You may **forfeit** it — bin the whole thing and draw a fresh
 full hand. But it **costs your turn** (you don't feed the snake), and it's random, so
-it might save you or sink you. You can only forfeit a full, freshly-dealt hand, once
-per hand — it's a mulligan for a bad deal, not an escape from a bite.
+it might save you or sink you. You can forfeit a full, freshly-dealt hand once per
+hand — a mulligan for a bad deal.
+
+**Last-card rescue (a skill rule, on by default):** the app also lets you forfeit when
+you're down to your **last card** — so a lone card that would otherwise overshoot and
+bite you can be binned for a fresh hand instead. Switch it off in Settings for the
+classic sink-or-swim ending.
 
 ---
 
@@ -91,8 +116,9 @@ A round always ends one of two ways.
 
 ### The Pin — *you win the round*
 
-You land the snake on its maximum **exactly**. You've pinned it. **You score 0, and
-everyone else takes 5.** This is what the wild Ace is for.
+You land the snake on its maximum **exactly** — with a single card, the wild Ace, or by
+adding **2–3 cards together** (a combo pin). You've pinned it. **You score 0, and everyone
+else takes 5.** This is what the wild Ace is for.
 
 ### The Bite — *you lose the round*
 
@@ -165,6 +191,11 @@ The bots play a tight defensive game and pin most rounds. Here's how to beat the
    redraw — brutal on someone hoarding Queens, but random, so *aim* it. Forfeit is the
    same bet on yourself: swap a dead hand, but it costs your turn.
 
+9. **Add up to the pin.** When no single card lands the max, check whether two or three of
+   your low cards *sum* to the gap — a combo pin wins from a hand that looked dead. But
+   only commit once you've done the maths: a miss is a self-inflicted +10 or +20, and it
+   hands the next player a tighter, more dangerous snake.
+
 **The one-line version:** out-pin them without feeding yourself into a bite. A bite is
 twice as expensive as letting an opponent pin, so when you can't pin, bail safe (feint,
 shed, dump a small card) rather than shoving the snake high and gambling on your next
@@ -179,6 +210,10 @@ draw.
 - **Hand** — 4 cards (tight) or 5 cards (casual). Five cards is far more forgiving —
    roughly half the bites. Takes effect next game.
 - **Tooltips** — hover any card for a reminder of what it does. Live.
+- **Last-card rescue** — forfeit on your final card to escape a corner instead of taking
+   the bite. Live. *(Skill rule; off = classic.)*
+- **Combo pins** — lay 2–3 cards in one turn to pin exactly, for a bust penalty if you
+   miss. Live. *(Skill rule; off = classic.)*
 
 Your settings, win–loss record, and an in-progress game all save automatically and
 survive a refresh.

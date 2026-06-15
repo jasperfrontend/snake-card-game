@@ -26,6 +26,10 @@ const TACTICS: { h: string; p: string }[] = [
     p: 'It’s wild 0–9, so it pins from up to 9 away, your single best win tool. Played as 0 it’s a feint: survive a turn without feeding. Save it for the kill.',
   },
   {
+    h: 'Add up to the pin',
+    p: 'No single card lands the max? Check if two or three of your low cards sum to the gap, then lay them as a combo pin, a win from a hand that looked dead. But do the maths first: a miss is a self-inflicted 10 or 20, and it hands the next player a tighter snake.',
+  },
+  {
     h: 'The Queen is a panic button',
     p: 'Shed halves the snake, wasted at length 12, a lifesaver at 60. Hold it for when things get dangerously high, and to tee up your own pin afterwards.',
   },
@@ -35,7 +39,7 @@ const TACTICS: { h: string; p: string }[] = [
   },
   {
     h: 'Joker & Forfeit are gambles',
-    p: 'A Joker forces the next player to bin their hand and redraw, brutal on someone hoarding Queens, but random, so aim it. Forfeit is the same bet on yourself: swap a dead hand, but it costs your turn.',
+    p: 'A Joker forces the next player to bin their hand and redraw, brutal on someone hoarding Queens, but random, so aim it. Forfeit is the same bet on yourself: swap a dead hand, but it costs your turn. With last-card rescue on, you can even bin your final card to dodge a corner instead of taking the bite.',
   },
 ];
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { type Beat, useSnakeGame } from './composables/useSnakeGame';
-import { hasSeenRules, markRulesSeen } from './persistence';
+import { applyTheme, hasSeenRules, loadTheme, markRulesSeen, saveTheme, type Theme } from './persistence';
 import CardFace from './components/CardFace.vue';
 import SnakeRow from './components/SnakeRow.vue';
 import RulesModal from './components/RulesModal.vue';
@@ -13,6 +13,15 @@ const selectedAce = ref<number | null>(null);
 const showRules = ref(false);
 const showSettings = ref(false);
 const showTactics = ref(false);
+
+// light / dark theme. main.ts already painted <html> before mount; this ref just
+// drives the toggle's label and re-applies on change.
+const theme = ref<Theme>(loadTheme());
+function toggleTheme() {
+  theme.value = theme.value === 'dark' ? 'light' : 'dark';
+  applyTheme(theme.value);
+  saveTheme(theme.value);
+}
 
 onMounted(() => {
   if (game.loadSaved()) game.resume();
@@ -190,6 +199,19 @@ const status = computed(() => {
           >W · <b>{{ game.record.value.losses }}</b
           >L
         </span>
+        <!-- light/dark toggle. It rides the win/loss counter: to its right on
+             desktop, to its left on mobile (see the order swap in the media
+             query). -->
+        <button
+          class="ghost theme-toggle"
+          type="button"
+          :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+          :aria-pressed="theme === 'dark'"
+          :title="theme === 'dark' ? 'Light mode' : 'Dark mode'"
+          @click="toggleTheme"
+        >
+          <span aria-hidden="true">{{ theme === 'dark' ? '☀' : '☾' }}</span>
+        </button>
       </div>
       <div class="controls">
         <div class="actions">
@@ -473,6 +495,26 @@ const status = computed(() => {
   color: var(--ink);
 }
 
+/* the light/dark toggle sits in the brand row. DOM order puts it after the W/L
+   record, so on desktop it lands to the record's right with no extra rules; the
+   mobile media query flips it to the record's left. */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.theme-toggle:hover {
+  background: rgb(168 123 43 / 12%);
+}
+
 .diff {
   display: flex;
   gap: 5px;
@@ -507,7 +549,7 @@ button:disabled {
 
 button.primary {
   background: var(--gold);
-  color: var(--bone);
+  color: var(--on-dark);
   border-color: var(--gold);
   font-weight: 700;
 }
@@ -541,7 +583,7 @@ button.ghost {
   letter-spacing: 0.04em;
   text-align: center;
   background: var(--cardback);
-  color: var(--bone);
+  color: var(--on-dark);
   border-top: 1px solid rgb(215 180 92 / 35%);
   box-shadow: 0 -8px 24px -14px rgb(0 0 0 / 50%);
   pointer-events: none;
@@ -589,7 +631,7 @@ button.ghost {
 .seats .seat.active {
   border-color: var(--gold-bright);
   border-width: 2px;
-  background: linear-gradient(160deg, #fbf3df, #f4e8c8);
+  background: linear-gradient(160deg, var(--tint-active-1), var(--tint-active-2));
   transform: translateY(-4px) scale(1.025);
   box-shadow:
     0 0 0 3px rgb(215 180 92 / 45%),
@@ -629,7 +671,7 @@ button.ghost {
 }
 
 .seat.you {
-  background: linear-gradient(160deg, var(--bone), #efead7);
+  background: linear-gradient(160deg, var(--bone), var(--tint-you));
 }
 
 .seat-head {
@@ -880,7 +922,7 @@ button.forfeit:hover {
   border: 1px solid var(--gold);
   border-radius: 10px;
   background: linear-gradient(160deg, var(--cardback, #1b2a22), #16221b);
-  color: var(--bone);
+  color: var(--on-dark);
 }
 
 .combo-bar .cb-info {
@@ -1024,16 +1066,16 @@ button.forfeit:hover {
 }
 
 .banner.pin {
-  background: #eef0e6;
+  background: var(--bg-pin);
 }
 
 .banner.bite {
-  background: #f3e7d6;
+  background: var(--bg-bite);
 }
 
 .banner.over {
   background: linear-gradient(155deg, var(--cardback-2), var(--cardback));
-  color: var(--bone);
+  color: var(--on-dark);
   border-color: rgb(215 180 92 / 40%);
 }
 
@@ -1089,7 +1131,7 @@ button.forfeit:hover {
 }
 
 .tally-cell.you {
-  background: linear-gradient(160deg, var(--bone), #efead7);
+  background: linear-gradient(160deg, var(--bone), var(--tint-you));
   border-color: var(--gold);
 }
 
@@ -1299,14 +1341,23 @@ button.forfeit:hover {
     height: 15px;
   }
 
-  /* the wordmark row spans full width; the W/L record rides to the far right of
-     it (next to SNAKE), so it costs no vertical space of its own */
+  /* the wordmark row spans full width; the W/L record and the theme toggle ride
+     to the far right of it (next to SNAKE), so they cost no vertical space of
+     their own. On mobile the toggle sits to the LEFT of the record: the order
+     swap below flips them, and the toggle carries the auto-margin that shoves
+     the pair rightward. */
   .brand {
     width: 100%;
   }
 
-  .record {
+  .theme-toggle {
+    order: 1;
     margin-left: auto;
+  }
+
+  .record {
+    order: 2;
+    margin-left: 12px;
   }
 
   /* the menu is its own full-width row; block container so the flex row fills it */

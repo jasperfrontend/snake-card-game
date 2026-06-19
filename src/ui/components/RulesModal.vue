@@ -121,7 +121,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   border-radius: 14px;
   padding: 30px 30px 26px;
   box-shadow: 0 30px 70px -30px rgb(0 0 0 / 70%);
-  background-image: radial-gradient(rgb(33 28 22 / 3%) 1px, transparent 1px);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1px);
   background-size: 4px 4px;
 }
 
@@ -267,11 +267,11 @@ li b {
 }
 
 .end.good {
-  background: linear-gradient(160deg, var(--bone), #efead7);
+  background: linear-gradient(160deg, var(--bone), var(--tint-you));
 }
 
 .end.bad {
-  background: linear-gradient(160deg, var(--bone), #f0e6d2);
+  background: linear-gradient(160deg, var(--bone), var(--tint-bad));
 }
 
 .end h4 {
@@ -304,7 +304,7 @@ button.primary {
   border: 1px solid var(--gold);
   border-radius: 6px;
   background: var(--gold);
-  color: var(--bone);
+  color: var(--on-dark);
   font-weight: 700;
   cursor: pointer;
 }

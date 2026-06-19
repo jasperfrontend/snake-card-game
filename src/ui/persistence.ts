@@ -12,6 +12,7 @@ const K_RECORD = 'snake:record:v1';
 const K_SAVE = 'snake:save:v1';
 const K_SEEN_RULES = 'snake:seenRules:v1';
 const C_SEEN_RULES = 'snake_seen_rules';
+const K_THEME = 'snake:theme:v1';
 
 export interface Settings {
   difficulty: Difficulty;
@@ -126,6 +127,30 @@ export function saveGame(data: SaveData): void {
 }
 export function clearSave(): void {
   remove(K_SAVE);
+}
+
+// light / dark theme ---------------------------------------------------------
+// Dark is the default per popular demand: a fresh visitor with no stored choice
+// gets dark. Once they touch the toggle we remember it.
+
+export type Theme = 'light' | 'dark';
+
+export function loadTheme(): Theme {
+  const t = read<Theme>(K_THEME);
+  return t === 'light' || t === 'dark' ? t : 'dark';
+}
+
+export function saveTheme(theme: Theme): void {
+  write(K_THEME, theme);
+}
+
+/** Reflect the theme onto <html> (which the CSS keys off) and the browser
+ *  chrome colour. Safe to call before the app mounts; a no-op under Vitest. */
+export function applyTheme(theme: Theme): void {
+  if (typeof document === 'undefined') return;
+  document.documentElement.dataset.theme = theme;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#181410' : '#f4eee1');
 }
 
 // first-visit rules ----------------------------------------------------------

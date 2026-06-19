@@ -127,7 +127,7 @@ const room = computed(() => props.maxLength - props.length);
 }
 
 .seg.trick {
-  background: linear-gradient(160deg, #fbf4e3, var(--bone-2));
+  background: linear-gradient(160deg, var(--tint-trick), var(--bone-2));
   color: var(--gold);
 }
 

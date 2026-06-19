@@ -200,7 +200,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   border-radius: 14px;
   padding: 28px 28px 24px;
   box-shadow: 0 30px 70px -30px rgb(0 0 0 / 70%);
-  background-image: radial-gradient(rgb(33 28 22 / 3%) 1px, transparent 1px);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1px);
   background-size: 4px 4px;
 }
 
@@ -300,7 +300,7 @@ h2 {
 .seg-btn.on {
   background: var(--gold);
   border-color: var(--gold);
-  color: var(--bone);
+  color: var(--on-dark);
 }
 
 .s-main {
@@ -346,7 +346,7 @@ button.ghost {
 
 button.primary {
   background: var(--gold);
-  color: var(--bone);
+  color: var(--on-dark);
   font-weight: 700;
 }
 </style>

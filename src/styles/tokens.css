@@ -14,9 +14,52 @@
   --cardback-2: #24382c;
   --red: #7a1f1f;
 
+  /* the cream stays cream even in dark mode: it's the foreground laid on the
+     dark/gold accents (primary buttons, the status bar, tooltips, the game-over
+     banner). Surface uses of --bone flip dark; these don't. */
+  --on-dark: #f4eee1;
+
+  /* themeable surface tints. Light values reproduce the originals exactly;
+     the dark block below swaps them for warm low-key equivalents. */
+  --tint-you: #efead7; /* the "you" seat / your tally cell */
+  --tint-active-1: #fbf3df; /* active seat gradient, top */
+  --tint-active-2: #f4e8c8; /* active seat gradient, bottom */
+  --tint-trick: #fbf4e3; /* a trick segment in the snake row */
+  --bg-pin: #eef0e6; /* pin (good-news) banner */
+  --bg-bite: #f3e7d6; /* bite (bad-news) banner */
+  --tint-bad: #f0e6d2; /* rulebook's "bad ending" card */
+
+  /* the faint dotted paper texture on the page and modal panels */
+  --dot: rgb(33 28 22 / 2.5%);
+
   --display: 'Fraunces', georgia, serif;
   --body: 'Newsreader', georgia, serif;
   --mono: 'Space Mono', 'Courier New', monospace;
+}
+
+/* Dark mode. Warm espresso/charcoal rather than flat black, so the game keeps
+   its sand-and-gold character at night. Set on <html> as data-theme="dark"
+   (see persistence.applyTheme); the toggle lives in the header. */
+:root[data-theme='dark'] {
+  --ink: #ece3d2;
+  --ink-soft: #a59a86;
+  --bone: #181410; /* page + raised surfaces */
+  --bone-2: #221c15; /* surface gradient / track */
+  --gold: #c79a45; /* nudged brighter so it sings on the dark ground */
+  --gold-bright: #e6c574;
+  --cardback: #12201a; /* the dark-green accent, lifted off the page a touch */
+  --cardback-2: #1a3026;
+  --red: #d0594a; /* the muddy maroon would vanish on dark; brighten it */
+
+  --tint-you: #241e15;
+  --tint-active-1: #2c2417;
+  --tint-active-2: #362c1a;
+  --tint-trick: #2a2317;
+  --bg-pin: #18241c; /* cool green wash = good news */
+  --bg-bite: #2c2018; /* warm wash = the bite */
+  --tint-bad: #2a2217;
+
+  --dot: rgb(245 238 225 / 3.5%);
 }
 
 * {
@@ -34,8 +77,11 @@ body {
   font-family: var(--body), serif;
   font-size: 17px;
   line-height: 1.6;
-  background-image: radial-gradient(rgb(33 28 22 / 2.5%) 1px, transparent 1px);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1px);
   background-size: 4px 4px;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
 /* Visible keyboard focus everywhere (quality floor). */

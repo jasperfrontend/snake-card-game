@@ -117,7 +117,7 @@ const description = computed(() => {
   padding: 7px 10px;
   border-radius: 8px;
   background: var(--cardback, #1b2a22);
-  color: var(--bone, #f4eee1);
+  color: var(--on-dark, #f4eee1);
   border: 1px solid rgb(215 180 92 / 35%);
   font-family: var(--body), Georgia, serif;
   font-size: 13px;

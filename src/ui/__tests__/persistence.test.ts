@@ -124,6 +124,72 @@ describe('persistence', () => {
     expect(g2.biteCounts.value).toEqual(g.biteCounts.value);
   });
 
+  // Regression: a bot forfeit must advance exactly one seat. A Slip (J) sets a
+  // one-shot `pendingSkip` that is spent the same turn it is played, so a saved
+  // game should never resume with it set. A stale flag (e.g. from an older build)
+  // made the next forfeit skip a seat — here Bot B, who was holding a winning Ace.
+  it('a stale pendingSkip in a save does not skip the next player after a forfeit', async () => {
+    // Bot A (seat 1) to act with an all-food, unplayable hand at 68/69: it will
+    // forfeit. Bot B (seat 2) holds an Ace that pins 68->69. The buggy flag would
+    // skip Bot B and land on the human; healed, Bot B takes its turn and pins.
+    const buggy = {
+      version: 1,
+      state: {
+        players: [
+          { hand: [{ kind: 'food', value: 2 }], score: 20, isBot: false },
+          {
+            hand: [
+              { kind: 'food', value: 10 },
+              { kind: 'food', value: 9 },
+              { kind: 'food', value: 8 },
+              { kind: 'food', value: 7 },
+            ],
+            score: 10,
+            isBot: true,
+            difficulty: 'hard',
+          },
+          { hand: [{ kind: 'A', value: null }, { kind: 'food', value: 10 }], score: 20, isBot: true, difficulty: 'hard' },
+        ],
+        length: 68,
+        maxLength: 69,
+        handSize: 4,
+        direction: 1,
+        current: 1,
+        drawPile: [
+          { kind: 'food', value: 3 },
+          { kind: 'food', value: 6 },
+          { kind: 'food', value: 3 },
+          { kind: 'food', value: 5 },
+          { kind: 'food', value: 7 },
+        ],
+        discardPile: [{ kind: 'food', value: 4 }],
+        dealer: 1,
+        pendingSkip: true, // the stale flag under test
+        phase: 'playing',
+        events: [],
+        roundMeta: { plays: 13, trickCounts: { A: 1 } },
+      },
+      rng: { seed: 619662387, calls: 306 },
+      difficulty: 'hard',
+      awaitingHuman: false,
+      legalMoves: [],
+      snake: [],
+      log: [],
+      pins: [0, 0, 0],
+      bites: [0, 0, 0],
+    };
+    localStorage.setItem('snake:save:v1', JSON.stringify(buggy));
+
+    const g = useSnakeGame({ players: 3, seed: 1, botDelayMs: 0, forfeitAtOne: true, comboPin: true });
+    expect(g.loadSaved()).toBe(true);
+    expect(g.state.value.pendingSkip).toBe(false); // healed on load
+    await g.resume();
+
+    // Bot B was NOT skipped: it took its turn and pinned with the Ace.
+    expect(g.state.value.roundResult?.ending).toBe('pin');
+    expect(g.state.value.roundResult?.who).toBe(2);
+  });
+
   it('updates the win/loss record and clears the save on game over', async () => {
     const g = useSnakeGame({ players: 3, seed: 31, botDelayMs: 0, difficulty: 'easy' });
     await g.newGame();

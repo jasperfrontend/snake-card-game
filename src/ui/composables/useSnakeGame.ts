@@ -315,6 +315,10 @@ export function useSnakeGame(opts: GameOptions = {}) {
     rngBox = rngFromState(saved.rng);
     state.value = saved.state;
     if (!state.value.handSize) state.value.handSize = handSize.value; // saves predating handSize
+    // Heal a stale skip: a Slip is spent the same turn it is played, so no turn
+    // ever legitimately begins with one pending. A save left with it set (e.g. by
+    // an older build) would otherwise skip a seat on the next forfeit/turn.
+    state.value.pendingSkip = false;
     difficulty.value = saved.difficulty;
     awaitingHuman.value = saved.awaitingHuman;
     legalMoves.value = saved.legalMoves;
